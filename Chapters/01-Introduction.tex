@@ -1,21 +1,35 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{Introduction}
+\chapter{Introduzione}
+L'esigenza di una comunicazione riservata, autentica e integra costituisce un pilastro fondamentale dell'architettura del mondo digitale contemporaneo. Tradizionalmente, la sicurezza delle informazioni è stata affidata alla crittografia e a protocolli standard come TLS/SSL, progettati per rendere il contenuto dei messaggi inaccessibile a chiunque non possieda le chiavi di decifratura.
 
-The introduction is usually a short chapter that can be read in less than 10 minutes.
+Tuttavia, l'aumento delle misure di sorveglianza di massa e di censura capillare ha messo in luce una vulnerabilità critica intrinseca alla crittografia: la sua visibilità. Sebbene il contenuto rimanga segreto, l'elevata entropia del traffico cifrato lo rende facilmente distinguibile dalle comunicazioni in chiaro. Questo permette a regimi autoritari o a sofisticati meccanismi di \emph{firewalling} di identificare, bloccare o degradare selettivamente le comunicazioni protette, rendendo di fatto impossibile lo scambio di informazioni in contesti ostili.
 
-The goal of the Introduction is to engage the reader (why you should keep reading).
-You don't have to discuss anything in detail. Rather, the goal is to tell the reader:
-\begin{itemize}
-%  \item Why something has to be done (why the thesis topic is important),
-  \item what is the problem dealt with and why the problem is a problem;
-  \item what is the particular topic you're going to talk about in the thesis;
-  \item what are your goals in doing so, and what methodology do you follow;
-  \item what are the implications of your work.
-\end{itemize}
+In scenari di censura estrema emerge dunque la necessità di ricorrere alla steganografia. Questa disciplina si occupa dell'occultamento di informazioni segrete all'interno di oggetti di copertura apparentemente innocui (come testi, immagini o audio), detti \emph{cover object}. A differenza della crittografia, il cui successo dipende dalla difficoltà matematica di decifrare il messaggio, la sicurezza steganografica dipende dall'indistinguibilità statistica: un osservatore esterno non deve essere in grado di discriminare tra un oggetto contenente un messaggio segreto (\emph{stego-object}) e uno privo di esso.
 
-The above points will be further expanded in the following chapters, so only a glimpse is essential. 
+Le metodologie steganografiche classiche, come la modifica dei bit meno significativi (LSB) nelle immagini, si sono rivelate vulnerabili alla moderna crittoanalisi statistica. Per superare queste limitazioni e garantire una sicurezza dimostrabile, la ricerca recente ha operato un cambio di paradigma, orientandosi verso l'utilizzo di modelli generativi.
+
+In questo contesto si colloca \textbf{Meteor}, un algoritmo di steganografia a chiave simmetrica che sfrutta le capacità dei modelli generativi (originariamente modelli di linguaggio come GPT-2) per creare canali di comunicazione occulti. Meteor non modifica un contenuto esistente, ma guida il processo di generazione stesso: utilizza la distribuzione di probabilità del modello per campionare i token successivi in base al messaggio segreto cifrato. Questo garantisce che lo \emph{stego-object} risultante sia statisticamente coerente con l'output naturale del modello, rendendo la presenza del messaggio estremamente difficile da rilevare.
+
+L'obiettivo di questa tesi è estendere il principio di sicurezza steganografica di Meteor all'ambito delle immagini ad alta risoluzione.
+Per raggiungere tale scopo, viene sfruttata l'efficienza dell'architettura \textbf{VQ-GAN} (Vector Quantized Generative Adversarial Network). La scelta di questa architettura è strategica: la VQ-GAN permette di modellare immagini complesse attraverso un vocabolario discreto di "token visivi" (codebook), consentendo l'applicazione di un Transformer autoregressivo per la generazione.
+Il lavoro svolto mira a dimostrare come sia possibile incorporare messaggi cifrati durante la fase di generazione dell'immagine da parte della VQ-GAN, ottenendo risultati visivamente realistici e robusti contro i tentativi di rilevamento.
+
+Le implicazioni di questo approccio sono significative per lo sviluppo di strumenti \emph{censorship-resistant}: abilitare lo scambio di informazioni nascoste in immagini di alta qualità offre un nuovo livello di protezione per la privacy degli utenti e la libertà di espressione in ambienti digitali sorvegliati.
 
 \medskip
 
-It is customary to conclude the Introduction with a summary of the content of the rest of the thesis. One or two sentences are enough for each chapter.
+
+Il presente elaborato è organizzato come segue:
+
+\begin{itemize}
+	\item Il \textbf{Capitolo 2} fornisce il background teorico necessario, analizzando lo stato dell'arte della steganografia e i principi di funzionamento dei modelli generativi, con particolare focus su GAN e Transformer.
+	
+	\item Il \textbf{Capitolo 3} descrive in dettaglio l'algoritmo Meteor e l'architettura VQ-GAN, ponendo le basi teoriche per la loro integrazione proposta in questa tesi.
+	
+	\item Il \textbf{Capitolo 4} presenta l'architettura del sistema implementato, illustrando le modifiche apportate al meccanismo di campionamento per permettere l'embedding del messaggio nel flusso di token visivi.
+	
+	\item Il \textbf{Capitolo 5} espone i risultati sperimentali, valutando la qualità visiva delle immagini generate (tramite metriche come FID) e la capacità di steganografica (payload e robustezza).
+	
+	\item Infine, il \textbf{Capitolo 6} trae le conclusioni del lavoro svolto e delinea possibili sviluppi futuri per migliorare l'efficienza e la sicurezza del sistema proposto.
+\end{itemize}
