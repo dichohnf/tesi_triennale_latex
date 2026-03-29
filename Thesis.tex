@@ -7,14 +7,12 @@
 %   Andr\'e Miede http://www.miede.de   
 %--------------------------------------------------------------
 \documentclass[twoside,openright,titlepage,fleqn,
-	headinclude,12pt,a4paper,BCOR=5mm,footinclude]{scrbook}
-
-\usepackage[nottoc]{tocbibind}
+	headinclude,12pt,a4paper,BCOR=5mm,footinclude,bibliography=totoc,listof=totoc]{scrbook}
 %--------------------------------------------------------------
 % Inputs for the title page 
 %--------------------------------------------------------------
-\newcommand{\myItalianTitle}{Titolo italiano\xspace}
-\newcommand{\myEnglishTitle}{English title\xspace}
+\newcommand{\myItalianTitle}{Steganografia generativa su immagini:\\adattamento del protocollo Meteor tramite l'architettura VQ-GAN\xspace}
+\newcommand{\myEnglishTitle}{Generative Image Steganography: Adapting the Meteor Protocol to the VQ-GAN Architecture\xspace}
 % use the right myDegree option
 \newcommand{\myDegree}{Corso di Laurea in Informatica\xspace}
 %\newcommand{\myDegree}{Corso di Laurea Magistrale in Informatica\xspace}
@@ -25,7 +23,7 @@
 \newcommand{\myFirstCoSupervisorName}{PhD \textit{Giulia Bertazzini}\xspace} %%% optional: remove this command if the thesis has no Co-Supervisor
 \newcommand{\mySecondCoSupervisorTitle}{Correlatore\xspace} %%% optional: remove this command if the thesis has less than 2 Co-Supervisors
 \newcommand{\mySecondCoSupervisorName}{Prof. \textit{Daniele Castellana}\xspace} %%% optional: remove this command if the thesis has less then two Co-Supervisors
-\newcommand{\myTime}{Anno Accademico 2025-2026\xspace}
+\newcommand{\myTime}{Anno Accademico 2024-2025\xspace}
 %--------------------------------------------------------------
 
 \usepackage[utf8]{inputenc} 
@@ -35,9 +33,25 @@
 % this will change the chapter titles
 \usepackage[italian]{babel}
 %\usepackage[english]{babel}
-\usepackage{csquotes}
+\usepackage{csquotes}	
 
-\usepackage[backend=biber, style=numeric]{biblatex}
+\usepackage[
+	backend    = biber, 
+	style      = alphabetic,
+	backref    = true, 
+	sorting    = ydnt,
+	]{biblatex}
+\DeclareLabelalphaTemplate{
+	\labelelement{
+		\field[uppercase,final]{shorthand}
+		\field[uppercase]{label}
+		\field[uppercase,strwidth=3,strside=left,ifnames=1]{labelname}
+		\field[uppercase,strwidth=1,strside=left]{labelname}
+	}
+	\labelelement{
+		\field[strwidth=2,strside=right]{year}
+	}
+}
 \bibliography{Bibliography} % Entries are in the Bibliography.bib file
 
 \usepackage[fleqn]{amsmath}  
@@ -62,7 +76,7 @@
 \newlength{\abcd} 
 \newcommand{\myfloatalign}{\centering} 
 \setlength{\extrarowheight}{3pt} 
-\captionsetup{format=hang,font=small}
+\captionsetup{labelfont=bf, format=plain, font=small, skip=0.5\baselineskip}
 
 \usepackage{geometry}
 \geometry{
@@ -77,7 +91,7 @@
 
 \lstset{
   	frame=tb,
-	language=Matlab,
+	language=python,
   	aboveskip=3mm,
   	belowskip=3mm,
   	showstringspaces=false,
@@ -89,6 +103,18 @@
   	tabsize=3
 }
 %--------------------------------------------------------------
+% Hyperlinks and references setting
+%--------------------------------------------------------------
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=magenta,      
+	urlcolor=cyan,
+	pdfpagemode=FullScreen,
+	linktoc=all
+}
+%--------------------------------------------------------------
 \begin{document}
 \frenchspacing
 \raggedbottom
@@ -97,7 +123,7 @@
 %--------------------------------------------------------------
 % Frontmatter
 %--------------------------------------------------------------
-\include{FrontMatter/Titlepage}
+\include{FrontMatter/TitlePage}
 \pagestyle{scrheadings}
 %--------------------------------------------------------------
 % Mainmatter
@@ -108,24 +134,24 @@
 \cleardoublepage
 \thispagestyle{empty}
 \begin{flushright}
-\null\vspace{\stretch {1}}
-%--------------------------------------------------------------
-% Citation
-%--------------------------------------------------------------
-\emph{"Questo è bello!"\\
-	"Eh, nella sua semplicità.."\\
-	"Questo è iper-realista."\\
-	"E se me lo concedi monocromatico."\\
-	"L'artista è Meteor."\\
-	"Meteor, già sentito!"\break --- Aldo, Giovanni e Giacomo} \vspace{\stretch{2}}\null
+	\null\vspace{\stretch {1}}
+	%--------------------------------------------------------------
+	% Citation
+	%--------------------------------------------------------------
+	\emph{"Questo è bello!"\\
+		"Eh, nella sua semplicità.."\\
+		"Questo è iper-realista."\\
+		"E se me lo concedi monocromatico."\\
+		"L'artista è Meteor."\\
+		"Meteor, già sentito!"\break --- Aldo, Giovanni e Giacomo} \vspace{\stretch{2}}\null
 \end{flushright}
 \cleardoublepage
 
 %--------------------------------------------------------------
 % Chapters
 %--------------------------------------------------------------
-\include{Chapters/01-Introduction}
-%\include{Chapters/02-StateOfTheArt}
+\include{Chapters/01-Introduzione}
+\include{Chapters/02-StatoDellArte}
 %\include{Chapters/03-Proposal}
 %\include{Chapters/04-Evaluation}
 %\include{Chapters/05-Conclusions}

@@ -1,0 +1,63 @@
+% !TEX root = ../Thesis.tex
+
+\chapter{Stato dell'arte}\label{ch:stato-arte}
+
+\section{Meteor: un framework di steganografia generativa per il testo}
+
+La necessità di una solida comprensione teorica, indispensabile per contestualizzare appieno il presente lavoro di ricerca, si articola attraverso una costellazione di concetti interdipendenti che convergono armoniosamente in un'unica opera fondamentale: il lavoro di \cite{kaptchuk-2021}, comunemente noto come \emph{Meteor}. Questa pionieristica indagine, che va oltre una mera disamina della steganografia classica e di quella generativa, introduce primariamente un approccio metodologico e, in secondo luogo, un framework robusto ed efficiente deputato alla \emph{generazione di messaggi testuali contenenti informazioni celate}. La peculiarità di queste informazioni risiede nella loro intrinseca invisibilità non solo all'occhio umano, ma anche, e soprattutto, alle più sofisticate tecniche di steganalisi. La ragione di tale elusività è profonda: il testo generato da \emph{Meteor} non manifesta alcuna deviazione statistica significativa rispetto a un testo prodotto autonomamente dal medesimo modello linguistico di base. Come verrà dettagliato in seguito, \emph{Meteor} si avvale di un modello linguistico che ha raggiunto una notevole notorietà, estendendosi ben oltre gli ambiti accademici tradizionali, potremmo dire il primo del suo genere a varcare le soglie del dibattito pubblico, sebbene gran parte della sua fama derivi dall'influenza esercitata sui suoi successori. Nello specifico, \emph{Meteor} impiega il modello \textbf{GPT-2}; tuttavia, la sua architettura è stata concepita con una notevole flessibilità, risultando agnostica rispetto al modello linguistico sottostante. Questo framework rappresenta, pertanto, un pilastro fondamentale per la presente ricerca, configurandosi non solo come un esempio paradigmatico di metodi steganografici capaci di eludere gli attuali algoritmi di steganalisi – la sfida predominante nel campo della steganografia moderna – ma anche come un catalizzatore per nuove direzioni di ricerca.
+
+Per una comprensione ancora più profonda, è opportuno fare un passo indietro ed esaminare il contesto socio-tecnologico in cui \emph{Meteor} è maturato e le problematiche specifiche che si proponeva di risolvere. Successivamente, analizzeremo le ragioni per cui l'architettura VQ-GAN è stata presa in considerazione come possibile influenza per questo framework, pur tenendo presente che, come si vedrà, non si tratta né dell'unica né dell'architettura intrinsecamente più efficace applicabile in questo ambito.
+
+L'essenza di \emph{Meteor} risiede nell'idea innovativa di utilizzare un modello generativo per la creazione di contenuti steganografici, impiegando le sue capacità per produrre un'approssimazione sufficientemente accurata del linguaggio naturale. In termini pratici, il modello agisce come un sofisticato dizionario: data una sequenza di contesto iniziale, è in grado di fornire una distribuzione di probabilità dettagliata per tutti i possibili \emph{token} linguistici successivi. La scelta del \emph{token} da inserire nella sequenza viene quindi effettuata sulla base di un ordinamento predefinito. Questa metodologia costituisce il nucleo operativo dei moderni modelli generativi di linguaggio, inclusi gli LLM, e può essere abilmente manipolata per generare un testo statisticamente probabile, ma al contempo contenente un messaggio segreto decodificabile. La decodifica è resa possibile, tuttavia, solo a condizione che il destinatario sia a conoscenza della tecnica impiegata e disponga di una chiave privata condivisa con il mittente, elemento cruciale per garantire la sicurezza e la recuperabilità delle informazioni nascost, oltre che del modello linguistico utilizzato per la generazione del testo. In questo modo, \emph{Meteor} si posiziona come un sistema di comunicazione segreta che sfrutta le capacità generative dei modelli linguistici per nascondere informazioni in piena vista, rendendo computazionalmente impossibile per un osservatore esterno identificare o decifrare il messaggio nascosto.
+
+Costruiamo ora uno scenario illustrativo, volto a consolidare in modo approfondito la comprensione del meccanismo operativo di \emph{Meteor} e, più in generale, dei principi fondamentali della steganografia generativa. Immaginiamo una comunicazione confidenziale tra due entità distinte, Alice (A) e Bob (B), che desiderano scambiarsi informazioni sensibili con la massima discrezione. L'obiettivo primario di questa precauzione è impedire a un potenziale osservatore esterno, qui identificato come Eve (E), di intercettare, decifrare o persino riconoscere la natura confidenziale del contenuto del messaggio. Un contesto d'uso particolarmente pertinente e diffuso che rende necessaria l'adozione di tecniche steganografiche avanzate si verifica quando Alice o Bob operano all'interno di una rete di comunicazione o di un sistema autonomo soggetto a un controllo governativo particolarmente stringente. Tali sistemi spesso implementano estese forme di filtraggio dei contenuti, basate su sofisticate analisi dei messaggi che transitano al loro interno. In circostanze così restrittive, messaggi che sono stati opportunamente cifrati, ovvero dotati di crittografia, hanno la "vulnerabilità" di essere facilmente identificabili come tali e quindi facilmente filtrabili dai gestori dei nodi della rete (\autoref{fig:alice-bob-eve-firewall}). Un esempio emblematico di tale scenario è rappresentato dal sistema citato in \autocite{chinawall-2015}, comunemente noto come il "\emph{China's Great Firewall}". Questo imponente sistema esercita un controllo significativo sui gestori di rete e sul traffico dati, operando spesso attraverso meccanismi non trasparenti o del tutto ignoti all'utente finale\footnote{È importante sottolineare che limitazioni significative alla libertà di comunicazione non sono state prerogativa esclusiva di specifici contesti geopolitici, ma sono state osservate e attuate anche da governi appartenenti alla sfera occidentale o da entità private. A tale riguardo, si rimanda alle analisi presentate in \autocites{conger-2016,sablah-2025,suanno-2026,pirate-party-2026}.}. 
+All'interno di un quadro operativo marcatamente ostile come questo, la steganografia generativa si propone di superare il problema fondamentale del rilevamento. L'obiettivo è permettere ad Alice e Bob di comunicare in modo intrinsecamente "segreto", impedendo a Eve di etichettare la comunicazione come anomala, sospetta o meritevole di attenzione speciale\footnote{È importante sottolineare che, in contesti operativi simili, il termine "segreto" può avere connotazioni negative, suggerendo attività clandestine illecite o non etiche. Tuttavia, nel presente scenario, "segreto" e "privato" sono usati in modo quasi sinonimico. Una comunicazione è considerata segreta se non viene intercettata o compresa da terzi, e privata se solo i destinatari designati possono interpretarne il contenuto, garantendo così l'esclusività dell'accesso all'informazione.}.
+\begin{figure}[tbh]
+  \centering
+	\frame{\includegraphics[width=.8\textwidth]{AliceBobEveFirewall.pdf}}
+	\caption{Rappresentazione schematica di una comunicazione tra Alice (A) e Bob (B) in presenza di un osservatore esterno, Eve (E), e di un sistema di filtraggio dei contenuti, come un firewall governativo, progettato per monitorare e bloccare il traffico sospetto.}
+  \label{fig:alice-bob-eve-firewall}
+\end{figure}
+
+La metodologia cardine, che costituisce l'ossatura del framework \emph{Meteor}, consiste, dunque, nell'impiegare in modo strategico un modello generativo avanzato. Questo modello è incaricato della creazione di un testo che possegga una doppia caratteristica essenziale: da un lato, deve essere statisticamente indistinguibile da un testo prodotto naturalmente, apparendo quindi plausibile e privo di anomalie; dall'altro, deve veicolare al suo interno, in maniera nascosta e decodificabile, un messaggio segreto. Questo approccio garantisce che, anche qualora Eve dovesse intercettare la comunicazione, le sarebbe impossibile identificarla come un potenziale contenitore di informazioni nascoste. Ciò è dovuto al fatto che il testo generato apparirebbe come un output linguisticamente coerente, semanticamente valido e statisticamente plausibile, rendendolo virtualmente indistinguibile da qualsiasi altro testo prodotto spontaneamente. L'efficacia di tale indistinguibilità aumenta quanto più avanzato è il modello linguistico utilizzato, specialmente se questo è capace di rappresentare fedelmente le intricate sfumature del linguaggio naturale.
+
+Dal punto di vista teorico, \emph{Meteor} definisce un protocollo di comunicazione sicura e resiliente, progettato per operare in ambienti ostili. La progettazione e l'implementazione del sistema hanno affrontato due sfide principali.
+
+La prima criticità riguarda l'individuazione di un adeguato \emph{sampler steganografico}. Tale algoritmo deve selezionare, dato un contesto testuale, un token che sia non solo semanticamente coerente, ma anche conforme alla distribuzione di probabilità del linguaggio naturale. Gli autori hanno affrontato il problema impiegando i Large Language Models (LLM) che, pur non costituendo un modello perfetto del linguaggio, rappresentano lo stato dell'arte nella stima delle distribuzioni probabilistiche testuali. Inoltre, la possibilità di specializzare tali modelli su stili linguistici specifici incrementa significativamente la plausibilità dei messaggi generati.
+
+La seconda sfida è legata alla variabilità dell'entropia nel linguaggio naturale. In contesti caratterizzati da entropia estremamente bassa, la libertà di scelta del token successivo è minima; ad esempio, in una sequenza come "\emph{The largest carnivore of the Cretaceous period was the Tyrannosaurus}", il token successivo è quasi deterministicamente "Rex". In tali scenari, l'inserimento di informazione segreta comprometterebbe inevitabilmente la naturalezza del testo. Il framework \emph{Meteor} risolve questo problema adottando una strategia di codifica adattiva: il sistema evita deliberatamente l'inserimento di dati nelle posizioni a bassa entropia. Di conseguenza, la quantità di informazione codificata per singolo token diventa variabile, permettendo di massimizzare il throughput complessivo senza degradare la qualità statistica e la plausibilità del segnale steganografico.
+
+% Our choice of architecture, Vector Quantized-Generative Adversarial Network
+% (VQ-GAN), is guided by the need for a robust and efficient generative model that
+% can effectively capture the complex patterns in natural language. VQ-GAN is a
+% type of Generative Adversarial Network (GAN) that combines the strengths of both
+% GANs and Vector Quantization (VQ).
+
+% In traditional GANs, the generator and discriminator are trained simultaneously
+% to optimize their respective objectives. However, this process can be slow and
+% prone to mode collapse, where the generator produces limited variations of a
+% single output. VQ-GAN addresses these issues by introducing vector quantization
+% into the generator.
+
+% The Vector Quantizer (VQ) is a neural network that maps the input data to a
+% discrete codebook, which consists of a set of learned vectors. These vectors are
+% optimized during training to minimize the reconstruction error between the input
+% data and the reconstructed output. In VQ-GAN, the VQ is used to discretize the
+% continuous latent space, allowing for more efficient and stable training.
+
+% The generator in VQ-GAN takes a random noise vector as input and produces a
+% discrete codebook that is used to reconstruct the original input data. The
+% discriminator, on the other hand, takes the reconstructed output and predicts
+% whether it is real or generated. By minimizing the loss function between the
+% predicted output and the true label, the discriminator learns to differentiate
+% between real and generated samples.
+
+% The combination of VQ-GAN with generative adversarial networks allows for more
+% efficient and effective learning of complex patterns in natural language. In our
+% experiment, we used a VQ-GAN with 128-dimensional latent space and a codebook
+% size of 512. The generator was trained using the Adam optimizer with a learning
+% rate of 0.001, while the discriminator was trained using the SGD optimizer with
+% a learning rate of 0.01.
+
+% The results of our experiment show that VQ-GAN can effectively generate natural
+% language text that is indistinguishable from real-world data.
