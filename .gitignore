@@ -327,3 +327,4 @@ TSWLatexianTemp*
 
 *.bak
 *.bkp
+.write-assist-ai

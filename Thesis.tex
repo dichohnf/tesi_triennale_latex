@@ -57,10 +57,12 @@
 \usepackage[fleqn]{amsmath}  
 \usepackage{ellipsis}
 \usepackage{listings}
+\usepackage{enumitem}
 \usepackage{subfig}
 \usepackage{caption}
 \usepackage{appendix}
 \usepackage{siunitx}
+\widowpenalty=10000
 \usepackage[pdftex]{graphicx} 
 \graphicspath{{./Figures/}}
 \usepackage[eulerchapternumbers,
@@ -91,7 +93,7 @@
 
 \lstset{
   	frame=tb,
-	language=python,
+		language=python,
   	aboveskip=3mm,
   	belowskip=3mm,
   	showstringspaces=false,
@@ -101,6 +103,9 @@
   	breaklines=true,
   	breakatwhitespace=true,
   	tabsize=3
+}
+\addto\captionsitalian{%
+  \renewcommand{\lstlistingname}{Listato}%
 }
 %--------------------------------------------------------------
 % Hyperlinks and references setting
