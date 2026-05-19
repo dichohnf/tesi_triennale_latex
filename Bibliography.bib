@@ -1,9 +1,20 @@
 % Encoding: UTF-8
-%--------------------------------------------------------------
-% Scientific papers
-%--------------------------------------------------------------
 
-@article{apau-24,
+@article{ambika-2023,
+  author         = {Ambika and Virupakshappa and Uplaonkar, Deepak S.},
+  title          = {Deep Learning-Based Coverless Image Steganography on Medical Images Shared via Cloud},
+  journal        = {Engineering Proceedings},
+  volume         = {59},
+  year           = {2023},
+  number         = {1},
+  article-number = {176},
+  url            = {https://www.mdpi.com/2673-4591/59/1/176},
+  issn           = {2673-4591},
+  abstract       = {Coverless image steganography is an approach for creating images with intrinsic colour and texture information that contain hidden secret information. Recently, generative adversarial networks’ (GANs) deep learning transformers have been used to generate secret hidden images. Although it has been proven that this approach is resistant to steganalysis attacks, it modifies critical information in the images which makes the images not suitable for applications like disease diagnosis from medical images shared over cloud. The colour and textural modification introduced by GANs affects the feature vector which is extracted from certain image regions and used for disease diagnosis. To solve this problem, this work proposes an attention-guided GAN which transforms images only in certain regions and retains the originality of images in certain regions. Due to this, there is not much distortion to features and disease classification accuracy.},
+  doi            = {10.3390/engproc2023059176}
+}
+
+@article{apau-2024,
   author    = {Apau, Richard AND Asante, Michael AND Twum, Frimpong AND Ben Hayfron-Acquah, James AND Peasah, Kwame Ofosuhene},
   title     = {Image steganography techniques for resisting statistical steganalysis attacks: A systematic literature review},
   journal   = {PLOS ONE},
@@ -16,6 +27,18 @@
   url       = {https://doi.org/10.1371/journal.pone.0308807},
   abstract  = {Information hiding in images has gained popularity. As image steganography gains relevance, techniques for detecting hidden messages have emerged. Statistical steganalysis mechanisms detect the presence of hidden secret messages in images, rendering images a prime target for cyber-attacks. Also, studies examining image steganography techniques are limited. This paper aims to fill the existing gap in extant literature on image steganography schemes capable of resisting statistical steganalysis attacks, by providing a comprehensive systematic literature review. This will ensure image steganography researchers and data protection practitioners are updated on current trends in information security assurance mechanisms. The study sampled 125 articles from ACM Digital Library, IEEE Explore, Science Direct, and Wiley. Using PRISMA, articles were synthesized and analyzed using quantitative and qualitative methods. A comprehensive discussion on image steganography techniques in terms of their robustness against well-known universal statistical steganalysis attacks including Regular-Singular (RS) and Chi-Square (X2) are provided. Trends in publication, techniques and methods, performance evaluation metrics, and security impacts were discussed. Extensive comparisons were drawn among existing techniques to evaluate their merits and limitations. It was observed that Generative Adversarial Networks dominate image steganography techniques and have become the preferred method by scholars within the domain. Artificial intelligence-powered algorithms including Machine Learning, Deep Learning, Convolutional Neural Networks, and Genetic Algorithms are recently dominating image steganography research as they enhance security. The implication is that previously preferred traditional techniques such as LSB algorithms are receiving less attention. Future Research may consider emerging technologies like blockchain technology, artificial neural networks, and biometric and facial recognition technologies to improve the robustness and security capabilities of image steganography applications.},
   publisher = {Public Library of Science}
+}
+
+@inproceedings{baluja-2017,
+  author    = {Baluja, Shumeet},
+  booktitle = {Advances in Neural Information Processing Systems},
+  editor    = {I. Guyon and U. Von Luxburg and S. Bengio and H. Wallach and R. Fergus and S. Vishwanathan and R. Garnett},
+  pages     = {},
+  publisher = {Curran Associates, Inc.},
+  title     = {Hiding Images in Plain Sight: Deep Steganography},
+  url       = {https://proceedings.neurips.cc/paper_files/paper/2017/file/838e8afb1ca34354ac209f53d90c3a43-Paper.pdf},
+  volume    = {30},
+  year      = {2017}
 }
 
 @online{bergmann-2025,
@@ -37,6 +60,20 @@
   title  = {Learn PyTorch for deep learning in a day. Literally.},
   date   = {2022-07-24},
   url    = {https://www.youtube.com/watch?v=Z_ikDlimN6A}
+}
+
+@article{chaumont-2019,
+  author     = {Marc Chaumont},
+  title      = {Deep Learning in steganography and steganalysis from 2015 to 2018},
+  journal    = {CoRR},
+  volume     = {abs/1904.01444},
+  year       = {2019},
+  url        = {http://arxiv.org/abs/1904.01444},
+  eprinttype = {arXiv},
+  eprint     = {1904.01444},
+  timestamp  = {Thu, 14 Oct 2021 09:14:35 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/abs-1904-01444.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
 }
 
 @inproceedings{chinawall-2015,
@@ -64,6 +101,32 @@
   url    = {https://techcrunch.com/2016/07/19/whatsapp-blocked-in-brazil-again/}
 }
 
+@article{dhariwal-2021,
+  author     = {Prafulla Dhariwal and
+                Alex Nichol},
+  title      = {Diffusion Models Beat GANs on Image Synthesis},
+  journal    = {CoRR},
+  volume     = {abs/2105.05233},
+  year       = {2021},
+  url        = {https://arxiv.org/abs/2105.05233},
+  eprinttype = {arXiv},
+  eprint     = {2105.05233},
+  timestamp  = {Fri, 14 May 2021 12:13:30 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/abs-2105-05233.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{dong-2025,
+  author  = {Dong, Yunyun and Wang, Zhen and Song, Bingbing and Zhou, Wei},
+  year    = {2025},
+  month   = {10},
+  pages   = {4270},
+  title   = {Double-Flow-Based Steganography Without Embedding for Image-to-Image Hiding},
+  volume  = {14},
+  journal = {Electronics},
+  doi     = {10.3390/electronics14214270}
+}
+
 @online{erdem-2023,
   author  = {given=Kemal, family=Erdem},
   title   = {Step by step visual introduction to diffusion models.},
@@ -73,40 +136,54 @@
 }
 
 @article{esser-2020,
-  author     = {Patrick Esser and Robin Rombach and Bj{\"{o}}rn Ommer},
+  author     = {Patrick Esser and
+                Robin Rombach and
+                Bj{\"{o}}rn Ommer},
   title      = {Taming Transformers for High-Resolution Image Synthesis},
   journal    = {CoRR},
-  year       = {2020},
   volume     = {abs/2012.09841},
-  eprint     = {2012.09841},
-  eprinttype = {arXiv},
+  year       = {2020},
   url        = {https://arxiv.org/abs/2012.09841},
-  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  eprinttype = {arXiv},
+  eprint     = {2012.09841},
+  timestamp  = {Sun, 03 Jan 2021 18:46:06 +0100},
   biburl     = {https://dblp.org/rec/journals/corr/abs-2012-09841.bib},
-  timestamp  = {Sun, 03 Jan 2021 18:46:06 +0100}
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
 }
 
-@report{freedom-house-no-date,
-  author = {given-i=A, given=Adrian, family=Shahbaz},
-  title  = {The rise of digital authoritarianism},
-  url    = {https://freedomhouse.org/report/freedom-net/2018/rise-digital-authoritarianism}
-}
-
-@article{guetal-2021,
-  author     = {Shuyang Gu and Dong Chen and Jianmin Bao and Fang Wen and Bo Zhang and Dongdong Chen and Lu Yuan and Baining Guo},
+@article{gu-2021,
+  author     = {Shuyang Gu and
+                Dong Chen and
+                Jianmin Bao and
+                Fang Wen and
+                Bo Zhang and
+                Dongdong Chen and
+                Lu Yuan and
+                Baining Guo},
   title      = {Vector Quantized Diffusion Model for Text-to-Image Synthesis},
   journal    = {CoRR},
-  year       = {2021},
   volume     = {abs/2111.14822},
-  eprint     = {2111.14822},
-  eprinttype = {arXiv},
+  year       = {2021},
   url        = {https://arxiv.org/abs/2111.14822},
-  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  eprinttype = {arXiv},
+  eprint     = {2111.14822},
+  timestamp  = {Tue, 08 Nov 2022 08:27:45 +0100},
   biburl     = {https://dblp.org/rec/journals/corr/abs-2111-14822.bib},
-  timestamp  = {Tue, 08 Nov 2022 08:27:45 +0100}
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{hu-18,
+@article{hamid-2025,
+  author       = {given-i=AI, given={Ari Ibrahim}, family=Hamid and given-i=WM, given={Wafaa Mustafa}, family=Abduallah},
+  date         = {2025-08-30},
+  doi          = {10.63496/ejcs.vol1.iss4.188},
+  journaltitle = {East Journal of Computer Science},
+  number       = {4},
+  title        = {StyleGAN2-STEGO: Secure coverless image steganography via latent space encoding},
+  url          = {https://doi.org/10.63496/ejcs.vol1.iss4.188},
+  volume       = {1}
+}
+
+@article{hu-2018,
   author   = {Hu, Donghui and Wang, Liang and Jiang, Wenjie and Zheng, Shuli and Li, Bin},
   title    = {A Novel Image Steganography Method via Deep Convolutional Generative Adversarial Networks},
   journal  = {IEEE Access},
@@ -117,13 +194,40 @@
   keywords = {Gallium nitride;Distortion;Brain modeling;Training;Digital images;Resists;Transform coding;Steganography;without embedding;coverless;generative adversarial networks}
 }
 
-@misc{kaptchuk-2021,
-  author       = {Gabriel Kaptchuk and Tushar M. Jois and Matthew Green and Aviel Rubin},
-  title        = {Meteor: Cryptographically Secure Steganography for Realistic Distributions},
-  year         = {2021},
-  howpublished = {Cryptology {ePrint} Archive, Paper 2021/686},
-  url          = {https://eprint.iacr.org/2021/686}
+
+@article{huang-2024,
+  author   = {Huang, Dongxia and Luo, Weiqi and Liu, Minglin and Tang, Weixuan and Huang, Jiwu},
+  journal  = {IEEE Transactions on Information Forensics and Security},
+  title    = {Steganography Embedding Cost Learning With Generative Multi-Adversarial Network},
+  year     = {2024},
+  volume   = {19},
+  number   = {},
+  pages    = {15-29},
+  abstract = {Since the generative adversarial network (GAN) was proposed by Ian Goodfellow et al. in 2014, it has been widely used in various fields. However, there are only a few works related to image steganography so far. Existing GAN-based steganographic methods mainly focus on the design of generator, and just assign a relatively poorer steganalyzer in discriminator, which inevitably limits the performances of their models. In this paper, we propose a novel Steganographic method based on Generative Multi-Adversarial Network (Steg-GMAN) to enhance steganography security. Specifically, we first employ multiple steganalyzers rather than a single steganalyzer like existing methods to enhance the performance of discriminator. Furthermore, in order to balance the capabilities of the generator and the discriminator during training stage, we propose an adaptive way to update the parameters of the proposed GAN model according to the discriminant ability of different steganalyzers. In each iteration, we just update the poorest one among all steganalyzers in discriminator, while update the generator with the gradients derived from the strongest one. In this way, the performance of generator and discriminator can be gradually improved, so as to avoid training failure caused by gradient vanishing. Extensive comparative results show that the proposed method can achieve state-of-the-art results compared with the traditional steganography and the modern GAN-based steganographic methods. In addition, a large number of ablation experiments verify the rationality of the proposed model.},
+  keywords = {Generators;Generative adversarial networks;Steganography;Costs;Security;Training;Distortion;Steganography;generative adversarial network;steganalysis},
+  doi      = {10.1109/TIFS.2023.3318939},
+  issn     = {1556-6021},
+  month    = {}
 }
+
+@inproceedings{kaptchuk-2021,
+  author    = {Kaptchuk, Gabriel and Jois, Tushar M. and Green, Matthew and Rubin, Aviel D.},
+  title     = {Meteor: Cryptographically Secure Steganography for Realistic Distributions},
+  year      = {2021},
+  isbn      = {9781450384544},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3460120.3484550},
+  doi       = {10.1145/3460120.3484550},
+  abstract  = {Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist. We identify two primary impediments to deploying universal steganography: (1) prior work leaves the difficult problem of finding samplers for non-trivial distributions unaddressed, and (2) prior constructions have impractical minimum entropy requirements. We investigate using generative models as steganographic samplers, as they represent the best known technique for approximating human communication. Additionally, we study methods to overcome the entropy requirement, including evaluating existing techniques and designing a new steganographic protocol, called Meteor. The resulting protocols are provably indistinguishable from honest model output and represent an important step towards practical steganographic communication for mundane communication channels. We implement Meteor and evaluate it on multiple computation environments with multiple generative models.},
+  booktitle = {Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security},
+  pages     = {1529–1548},
+  numpages  = {20},
+  keywords  = {applied cryptography, censorship resistance, generative models, steganography},
+  location  = {Virtual Event, Republic of Korea},
+  series    = {CCS '21}
+}
+
 
 @online{kaptchuk-meteor-website,
   author   = {given=Gabriel, family=Kaptchuk and given=Tushar, family=Jois and given=Matthew, family=Green and given={Aviel D.}, family=Rubin},
@@ -132,8 +236,7 @@
   url      = {https://meteorfrom.space/},
   urldate  = {2025-07-10}
 }
-
-@article{li-24,
+@article{li-2024,
   author         = {Li, Li and Zhang, Xinpeng and Chen, Kejiang and Feng, Guorui and Wu, Deyang and Zhang, Weiming},
   title          = {Image Steganography and Style Transformation Based on Generative Adversarial Network},
   journal        = {Mathematics},
@@ -146,24 +249,56 @@
   abstract       = {Traditional image steganography conceals secret messages in unprocessed natural images by modifying the pixel value, causing the obtained stego to be different from the original image in terms of the statistical distribution; thereby, it can be detected by a well-trained classifier for steganalysis. To ensure the steganography is imperceptible and in line with the trend of art images produced by Artificial-Intelligence-Generated Content (AIGC) becoming popular on social networks, this paper proposes to embed hidden information throughout the process of the generation of an art-style image by designing an image-style-transformation neural network with a steganography function. The proposed scheme takes a content image, an art-style image, and messages to be embedded as inputs, processing them with an encoder–decoder model, and finally, generates a styled image containing the secret messages at the same time. An adversarial training technique was applied to enhance the imperceptibility of the generated art-style stego image from plain-style-transferred images. The lack of the original cover image makes it difficult for the opponent learning steganalyzer to identify the stego. The proposed approach can successfully withstand existing steganalysis techniques and attain the embedding capacity of three bits per pixel for a color image, according to the experimental results.},
   article-number = {615}
 }
-
-@article{liu-20,
-  author   = {Liu, Jia and Ke, Yan and Zhang, Zhuo and Lei, Yu and Li, Jun and Zhang, Minqing and Yang, Xiaoyuan},
-  title    = {Recent Advances of Image Steganography With Generative Adversarial Networks},
-  journal  = {IEEE Access},
-  year     = {2020},
-  volume   = {8},
-  pages    = {60575-60597},
-  doi      = {10.1109/ACCESS.2020.2983175},
-  keywords = {Gallium nitride;Generative adversarial networks;Cryptography;Measurement;Graphics;Computational modeling;Image steganography;generative adversarial nets;cover synthesis;generative model}
+@article{li-2025,
+  author   = {Li, Xiao and Chen, Liquan and Fu, Tong and Fu, Zhangjie and Gao, Yuan},
+  journal  = {IEEE Transactions on Circuits and Systems for Video Technology},
+  title    = {Coverless Image Steganography Based on Semantic-Controlled Text-to-Image Generation},
+  year     = {2025},
+  volume   = {35},
+  number   = {8},
+  pages    = {8391-8405},
+  abstract = {Artificial Intelligence Generated Content (AIGC) has created a fertile ground for image steganography. Existing Coverless Image Steganography (CIS) methods rely on image semantics to encode secrets, transmitting stego images without embedding, inherently resisting steganalysis. However, constructing CIS Datasets (CISDs) for these methods demands excessive resources, making them impractical for communication. Moreover, achieving low cost and high security is unattainable under these conditions. Therefore, we propose a CIS method based on semantic-controlled text-to-image generation. Our method disguises users as typical AIGC community members utilizing mainstream black-box text-to-image generation with Stable Diffusion (SD). During pre-processing, plain prompts, derived from dialogues with a large language model, are divided into coded and uncoded prompts through our encryption process, where a secret key determines coded prompts. In communication, confusion prompts are selected from uncoded and coded prompts, excluding those determined by secrets. Subsequently, our stego shuffling process combines topic, secret, and confusion prompts to produce stego prompt sets. Diverse stego images maintaining visual topic consistency are generated from these sets using SD with generation seeds indicating transmission order. By introducing confusion prompts, our method is secure from recognition when revealing stego prompts. Experimental results demonstrate our method achieves low communication costs and enhances communication security.},
+  keywords = {Semantics;Text to image;Steganography;Security;Costs;Artificial intelligence;Visualization;Receivers;Image recognition;Coverless image steganography (CIS);image steganography;text-to-image generation;artificial intelligence generated content (AIGC)},
+  doi      = {10.1109/TCSVT.2025.3545067},
+  issn     = {1558-2205},
+  month    = {Aug}
 }
 
-@online{neskey-2025-are,
+@article{liu-2020,
+  author   = {Liu, Jia and Ke, Yan and Zhang, Zhuo and Lei, Yu and Li, Jun and Zhang, Minqing and Yang, Xiaoyuan},
+  journal  = {IEEE Access},
+  title    = {Recent Advances of Image Steganography With Generative Adversarial Networks},
+  year     = {2020},
+  volume   = {8},
+  number   = {},
+  pages    = {60575-60597},
+  abstract = {In the past few years, the Generative Adversarial Network (GAN), which proposed in 2014, has achieved great success. There have been increasing research achievements based on GAN in the field of computer vision and natural language processing. Image steganography is an information security technique aiming at hiding secret messages in common digital images for covert communication. Recently, research on image steganography has demonstrated great potential by introducing GAN and other neural network techniques. In this paper, we review the art of steganography with GANs according to the different strategies in data hiding, which are cover modification, cover selection, and cover synthesis. We discuss the characteristics of the three strategies of GAN-based steganography and analyze their evaluation metrics. Finally, some existing problems of image steganography with GAN are summarized and discussed. Potential future research topics are also forecasted.},
+  keywords = {Gallium nitride;Generative adversarial networks;Cryptography;Measurement;Graphics;Computational modeling;Image steganography;generative adversarial nets;cover synthesis;generative model},
+  doi      = {10.1109/ACCESS.2020.2983175},
+  issn     = {2169-3536},
+  month    = {}
+}
+
+@inproceedings{ma-2023,
+  title     = {Robust Steganography without Embedding Based on Secure Container Synthesis and Iterative Message Recovery},
+  author    = {Ma, Ziping and Zhu, Yuesheng and Luo, Guibo and Liu, Xiyao and Schaefer, Gerald and Fang, Hui},
+  booktitle = {Proceedings of the Thirty-Second International Joint Conference on
+               Artificial Intelligence, {IJCAI-23}},
+  publisher = {International Joint Conferences on Artificial Intelligence Organization},
+  editor    = {Edith Elkind},
+  pages     = {4838--4846},
+  year      = {2023},
+  month     = {8},
+  note      = {Main Track},
+  doi       = {10.24963/ijcai.2023/538},
+  url       = {https://doi.org/10.24963/ijcai.2023/538}
+}
+@online{neskey-2025,
   author       = {Neskey, Corey},
   title        = {Are Your Passwords in the Green?},
   url          = {https://www.hivesystems.com/blog/are-your-passwords-in-the-green},
   year         = {2025},
-  organization = {Hive Systems},
+  organization = {Hive Systems}
 }
 
 @online{pirate-party-2026,
@@ -172,6 +307,7 @@
   url          = {https://europeanpirates.eu/chatcontrol-the-sequel-nobody-asked-for/},
   visited-date = {2026-03-29}
 }
+
 
 @online{sablah-2025,
   author = {given-i=W, given=Wisdom, family=Sablah},
@@ -186,22 +322,112 @@
   date   = {2024-04-26},
   url    = {https://arxiv.org/abs/2404.17625}
 }
+
+@report{shahbaz-2018,
+  author = {given-i=A, given=Adrian, family=Shahbaz},
+  title  = {The rise of digital authoritarianism},
+  date   = 2018,
+  url    = {https://freedomhouse.org/report/freedom-net/2018/rise-digital-authoritarianism}
+}
+
+@article{shi-2017,
+  author     = {Haichao Shi and
+                Jing Dong and
+                Wei Wang and
+                Yinlong Qian and
+                Xiaoyu Zhang},
+  title      = {{SSGAN:} Secure Steganography Based on Generative Adversarial Networks},
+  journal    = {CoRR},
+  volume     = {abs/1707.01613},
+  year       = {2017},
+  url        = {http://arxiv.org/abs/1707.01613},
+  eprinttype = {arXiv},
+  eprint     = {1707.01613},
+  timestamp  = {Mon, 27 Sep 2021 08:16:56 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/ShiD0QZ17.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{su-2024,
+  author    = {Su, Wenkang and Ni, Jiangqun and Sun, Yiyan},
+  title     = {StegaStyleGAN: towards generic and practical generative image steganography},
+  year      = {2024},
+  isbn      = {978-1-57735-887-9},
+  publisher = {AAAI Press},
+  url       = {https://doi.org/10.1609/aaai.v38i1.27776},
+  doi       = {10.1609/aaai.v38i1.27776},
+  abstract  = {The recent advances in generative image steganography have drawn increasing attention due to their potential for provable security and bulk embedding capacity. However, existing generative steganographic schemes are usually tailored for specific tasks and are hardly applied to applications with practical constraints. To address this issue, this paper proposes a generic generative image steganogra-phy scheme called Steganography StyleGAN (StegaStyle-GAN) that meets the practical objectives of security, capacity, and robustness within the same framework. In StegaStyle-GAN, a novel Distribution-Preserving Secret Data Modulator (DP-SDM) is used to achieve provably secure generative image steganography by preserving the data distribution of the model inputs. Additionally, a generic and efficient Secret Data Extractor (SDE) is invented for accurate secret data extraction. By choosing whether to incorporate the Image Attack Simulator (IAS) during the training process, one can obtain two models with different parameters but the same structure (both generator and extractor) for lossless and lossy channel covert communication, namely StegaStyleGAN-Ls and StegaStyleGAN-Ly. Furthermore, by mating with GAN inversion, conditional generative steganography can be achieved as well. Experimental results demonstrate that, whether for lossless or lossy communication channels, the proposed StegaStyleGAN can significantly outperform the corresponding state-of-the-art schemes.},
+  booktitle = {Proceedings of the Thirty-Eighth AAAI Conference on Artificial Intelligence and Thirty-Sixth Conference on Innovative Applications of Artificial Intelligence and Fourteenth Symposium on Educational Advances in Artificial Intelligence},
+  articleno = {28},
+  numpages  = {9},
+  series    = {AAAI'24/IAAI'24/EAAI'24}
+}
+
 @article{suanno-2026,
   author = {given-i=M, given=Matteo, family=Suanno},
   date   = {2026-02-06},
   title  = {Cosa significa che Starlink non è più accessibile all'esercito russo in Ucraina},
   url    = {https://www.wired.it/article/cosa-sappiamo-blocco-starlink-militari-ucraina/}
 }
-@article{subramanian-21,
+
+@article{subramanian-2021,
   author   = {Subramanian, Nandhini and Elharrouss, Omar and Al-Maadeed, Somaya and Bouridane, Ahmed},
-  title    = {Image Steganography: A Review of the Recent Advances},
   journal  = {IEEE Access},
+  title    = {Image Steganography: A Review of the Recent Advances},
   year     = {2021},
   volume   = {9},
+  number   = {},
   pages    = {23409-23423},
+  abstract = {Image Steganography is the process of hiding information which can be text, image or video inside a cover image. The secret information is hidden in a way that it not visible to the human eyes. Deep learning technology, which has emerged as a powerful tool in various applications including image steganography, has received increased attention recently. The main goal of this paper is to explore and discuss various deep learning methods available in image steganography field. Deep learning techniques used for image steganography can be broadly divided into three categories - traditional methods, Convolutional Neural Network-based and General Adversarial Network-based methods. Along with the methodology, an elaborate summary on the datasets used, experimental set-ups considered and the evaluation metrics commonly used are described in this paper. A table summarizing all the details are also provided for easy reference. This paper aims to help the fellow researchers by compiling the current trends, challenges and some future direction in this field.},
+  keywords = {Deep learning;Media;Ciphers;Tools;Market research;Image color analysis;Image steganography;GAN steganography;CNN steganography;information hiding;image data hiding},
   doi      = {10.1109/ACCESS.2021.3053998},
-  keywords = {Deep learning;Media;Ciphers;Tools;Market research;Image color analysis;Image steganography;GAN steganography;CNN steganography;information hiding;image data hiding}
+  issn     = {2169-3536},
+  month    = {}
 }
+
+@article{tan-2025,
+  author         = {Tan, Lina and Li, Yi and Zeng, Yan and Chen, Peng},
+  title          = {An Adaptive JPEG Steganography Algorithm Based on the UT-GAN Model},
+  journal        = {Electronics},
+  volume         = {14},
+  year           = {2025},
+  number         = {20},
+  article-number = {4046},
+  url            = {https://www.mdpi.com/2079-9292/14/20/4046},
+  issn           = {2079-9292},
+  abstract       = {Adversarial examples pose severe challenges to information security, as their impacts directly extend to steganography and steganalysis technologies. This scenario, in turn, has further spurred the research and application of adversarial steganography. In response, we propose a novel adversarial embedding scheme rooted in a hybrid, partially data-driven approach. The proposed scheme first leverages an adversarial neural network (UT-GAN, Universal Transform Generative Adversarial Network) to generate stego images as a preprocessing step. Subsequently, it dynamically adjusts the cost function with the aid of a DCTR (Discrete Cosine Transform Residual)-based gradient calculator to optimize the images, ensuring that the final adversarial images can resist detection by steganalysis tools. The encoder in this scheme adopts a unique architecture, where its internal parameters are determined by a partially data-driven mechanism. This design not only enhances the capability of traditional steganography schemes to counter advanced steganalysis technologies but also effectively reduces the computational overhead during stego image generation.},
+  doi            = {10.3390/electronics14204046}
+}
+
+@thesis{turch-2020,
+  author      = {Turchetta, Gianmarco},
+  title       = {Applicazioni blockchain in sistemi di Telemedicina: condivisione e accesso sicuro ai dati sanitari},
+  type        = {Tesi di Laurea Magistrale in Ingegneria Biomedica},
+  institution = {Politecnico di Torino},
+  year        = {2020},
+  url         = {https://webthesis.biblio.polito.it/17016/}
+}
+
+@misc{waheed-2024,
+  title         = {A Novel Approach to Image Steganography Using Generative Adversarial Networks},
+  author        = {Waheed Rehman},
+  year          = {2024},
+  eprint        = {2412.00094},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CR},
+  url           = {https://arxiv.org/abs/2412.00094}
+}
+
+@misc{wang-2025,
+  title         = {GIFDL: Generated Image Fluctuation Distortion Learning for Enhancing Steganographic Security},
+  author        = {Xiangkun Wang and Kejiang Chen and Yuang Qi and Ruiheng Liu and Weiming Zhang and Nenghai Yu},
+  year          = {2025},
+  eprint        = {2504.15139},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CR},
+  url           = {https://arxiv.org/abs/2504.15139}
+}
+
 
 @online{weng-2021,
   author = {given-i=L, given=Lilian, family=Weng},
@@ -210,7 +436,34 @@
   url    = {https://lilianweng.github.io/posts/2021-07-11-diffusion-models/}
 }
 
-@article{zhang-19,
+@article{wu-2018,
+  title     = {StegNet: Mega Image Steganography Capacity with Deep Convolutional Network},
+  volume    = {10},
+  issn      = {1999-5903},
+  url       = {http://dx.doi.org/10.3390/fi10060054},
+  doi       = {10.3390/fi10060054},
+  number    = {6},
+  journal   = {Future Internet},
+  publisher = {MDPI AG},
+  author    = {Wu, Pin and Yang, Yang and Li, Xiaoqiang},
+  year      = {2018},
+  month     = June,
+  pages     = {54}
+}
+
+@article{yu-2021,
+  author   = {Yu, Cong and Hu, Donghui and Zheng, Shuli and Jiang, Wenjie and Li, Meng and Zhao, Zhong-qiu},
+  year     = {2021},
+  month    = {05},
+  pages    = {1-12},
+  title    = {An improved steganography without embedding based on attention GAN},
+  volume   = {14},
+  journal  = {Peer-to-Peer Networking and Applications},
+  doi      = {10.1007/s12083-020-01033-x},
+  abstract = {Steganography is an art to hide information in the carriers to prevent from being detected, while steganalysis is the opposite art to detect the presence of the hidden information. With the development of deep learning, several state-of-the-art steganography and steganalysis based on deep learning techniques have been proposed to improve hiding or detection capabilities. Generative Adversarial Networks (GANs) based steganography directly uses the minimax game between the generator and discriminator, to automatically generate steganography algorithms resisting being detected by powerful steganalysis. The steganography without embedding (SwE) based on GANs, where the generated cover images themselves are stego images carrying secret information has shown its state-of-the-art steganography performance. However, SwE based on GANs has serious weaknesses, such as low information recovery accuracy, low steganography capacity and poor natural showing. To solve these problems, this paper proposes a new SwE based on attention-GAN model, with carefully designed generator, discriminator and extractor, as well as their loss functions and optimized training mode. The generative model utilizes the attention method to improve the correlation among pixels and to correct errors such as image distortion and background abnormality. The soft margin discriminator is used to improve the compatibility of information recovery and fault tolerance of image generation. Experimental evaluations show that our method can achieve a very high information recovery accuracy (100% in some cases), and at the same time improve the steganography capacity and image quality.}
+}
+
+@article{zhang-2019,
   author   = {Zhang, Zhuo and Liu, Jia and Ke, Yan and Lei, Yu and Li, Jun and Zhang, Minqing and Yang, Xiaoyuan},
   title    = {Generative Steganography by Sampling},
   journal  = {IEEE Access},
@@ -220,20 +473,48 @@
   doi      = {10.1109/ACCESS.2019.2920313},
   keywords = {Gallium nitride;Generators;Security;Generative adversarial networks;Semantics;Training;Image generation;Generative adversarial network;image inpainting;steganography}
 }
-@article{zu-25,
+
+@article{zhao-2025,
+  title    = {RLL-SWE: A Robust Linked List Steganography Without Embedding for intelligence networks in smart environments},
+  journal  = {Journal of Network and Computer Applications},
+  volume   = {234},
+  pages    = {104053},
+  year     = {2025},
+  issn     = {1084-8045},
+  doi      = {https://doi.org/10.1016/j.jnca.2024.104053},
+  url      = {https://www.sciencedirect.com/science/article/pii/S1084804524002303},
+  author   = {Pengbiao Zhao and Yuanjian Zhou and Salman Ijaz and Fazlullah Khan and Jingxue Chen and Bandar Alshawi and Zhen Qin and Md Arafatur Rahman},
+  keywords = {Criminal and terrorist network, Smart environments, Steganography without embedding, Robust steganography, Covert communication},
+  abstract = {With the rapid development of technology, smart environments utilizing the Internet of Things, artificial intelligence, and big data are improving the quality of life and work efficiency through connected devices. However, these advances present significant security challenges. The data generated by these smart devices contains many private and sensitive information. In data transmission, crime and terrorism may intercept this sensitive information and use it for secret communications and illegal activities. Steganography hides information in media files and prevents information leakage and interception by criminal and terrorist networks in an intelligent environment. It is an important technology to protect data integrity and security. Traditional steganography techniques often cause detectable distortions, whereas Steganography Without Embedding (SWE) avoids direct modification of cover media, thereby minimizing detection risks. This paper introduces an innovative and robust technique called Robust Linked List (RLL)-SWE, which improves resistance to attacks compared to traditional methods. Using multiple median downsampling and gradient calculations, this method extracts stable features. It restructures them into a multi-head unidirectional linked list, ensuring accurate message retrieval and high resistance to adversarial attacks. Comprehensive analysis and simulation experiments confirm the technique’s exceptional effectiveness and steganographic capacity.}
+}
+
+@article{zhou-2024,
+  author   = {Zhou, Zhili and Bao, Zhipeng and Jiang, Weiwei and Huang, Yuan and Peng, Yun and Shankar, Achyut and Maple, Carsten and Selvarajan, Shitharth},
+  journal  = {IEEE Transactions on Consumer Electronics},
+  title    = {Latent Vector Optimization-Based Generative Image Steganography for Consumer Electronic Applications},
+  year     = {2024},
+  volume   = {70},
+  number   = {1},
+  pages    = {4357-4366},
+  abstract = {In consumer electronic applications, to transmit secret images securely, it is required to explore the advanced covert communication technology, i.e., Generative Image Steganography (GIS). However, the existing GIS schemes suffer from the issues of poor stego-image quality and limited hiding capacity. Consequently, these GIS schemes cannot meet the requirements of consumer electronic applications, in which massive secret information needs to be transmitted securely. To address the above issues, we propose a Latent Vector Optimization (LVO)-based GIS scheme, in which the information hiding is implemented by the flow-based generative model during the image generation. Specifically, the LVO algorithm is introduced to compute the hiding probability of each element of latent vector according to its impact on the quality of the stego-image generated from the latent vector. Then, it hides more information in elements with higher hiding probability. The extensive experiments demonstrate that, compared to current GIS schemes, the proposed LVO-based GIS scheme generates higher-quality images, while maintaining hiding capacity (up to  $5.0 \, bpp$ ) and accurate information extraction (almost 100% accuracy rate).},
+  keywords = {Steganography;Consumer electronics;Generative adversarial networks;Servers;Pareto optimization;Data models;Receivers;Generative model;generative steganography;AI-generated content;consumer electronics},
+  doi      = {10.1109/TCE.2024.3354824},
+  issn     = {1558-4127},
+  month    = {Feb}
+}
+
+@article{zhuo-2019,
+  title         = {Generative Reversible Data Hiding by Image to Image Translation via GANs},
+  author        = {Zhuo Zhang and Guangyuan Fu and Fuqiang Di and Changlong Li and Jia Liu},
+  year          = {2019},
+  eprint        = {1905.02872},
+  archiveprefix = {arXiv},
+  primaryclass  = {eess.IV},
+  url           = {https://arxiv.org/abs/1905.02872}
+}
+@article{zu-2025,
   author  = {Xu, Yuhua and Sun, Wei and Tang, Chengpei and Lu, Jiaxing and Zhou, Jingying and Gu, Chen},
   title   = {Approximate Gaussian Mapping for Generative Image Steganography},
   journal = {arXiv preprint arXiv:2510.07219},
   year    = {2025}
 }
-
-@Thesis{turch-20,
-  author      = {Turchetta, Gianmarco},
-  title       = {Applicazioni blockchain in sistemi di Telemedicina: condivisione e accesso sicuro ai dati sanitari},
-  type        = {Tesi di Laurea Magistrale in Ingegneria Biomedica},
-  institution = {Politecnico di Torino},
-  year        = {2020},
-  url         = {https://webthesis.biblio.polito.it/17016/},
-}
-
-@Comment{jabref-meta: databaseType:biblatex;}
