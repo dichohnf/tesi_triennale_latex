@@ -37,24 +37,13 @@
 
 \usepackage[
 	backend    = biber, 
-	style      = numeric,
+	style      = numeric-comp,
 	backref    = true, 
 	sorting    = ydnt,
 	]{biblatex}
-\DeclareLabelalphaTemplate{
-	\labelelement{
-		\field[uppercase,final]{shorthand}
-		\field[uppercase]{label}
-		\field[uppercase,strwidth=3,strside=left,ifnames=1]{labelname}
-		\field[uppercase,strwidth=1,strside=left]{labelname}
-	}
-	\labelelement{
-		\field[strwidth=2,strside=right]{year}
-	}
-}
 \bibliography{Bibliography} % Entries are in the Bibliography.bib file
 
-\usepackage[fleqn]{amsmath}  
+\usepackage[fleqn]{amsmath}
 \usepackage{ellipsis}
 \usepackage{listings}
 \usepackage{enumitem}
@@ -105,7 +94,7 @@
   	tabsize=3
 }
 \addto\captionsitalian{%
-  \renewcommand{\lstlistingname}{Listato}%
+  \renewcommand{\lstlistingname}{Listato}
 }
 %--------------------------------------------------------------
 % Hyperlinks and references setting
