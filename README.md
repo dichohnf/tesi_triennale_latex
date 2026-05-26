@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/LaTeX-47A141?style=for-the-badge&logo=latex&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Biber-008080?style=for-the-badge&logo=tex&logoColor=white"/>
-  <img src="https://img.shields.io/badge/PDF-FF0000?style=for-the-badge&logo=adobeacrobatreader&logoColor=white"/>
+  <a href="https://www.latex-project.org/"><img src="https://img.shields.io/badge/LaTeX-47A141?style=for-the-badge&logo=latex&logoColor=white"/></a>
+  <a href="https://github.com/plk/biber"><img src="https://img.shields.io/badge/Biber-008080?style=for-the-badge&logo=tex&logoColor=white"/></a>
+  <a href="https://github.com/dichohnf/tesi_triennale/blob/main/Thesis.pdf"><img src="https://img.shields.io/badge/PDF-FF0000?style=for-the-badge&logo=adobeacrobatreader&logoColor=white"/></a>
 </p>
 
 # 🎓 Tesi triennale — Steganografia generativa su immagini
