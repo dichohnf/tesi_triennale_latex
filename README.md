@@ -6,10 +6,10 @@
 
 # 🎓 Tesi triennale — Steganografia generativa su immagini
 
-**👤 Autore:** Matteo Diciotti  
-**👨‍🏫 Relatore:** Prof. Daniele Baracchi  
-**👩‍🔬 Correlatrici/Correlatore:** PhD Giulia Bertazzini, Prof. Daniele Castellana  
-**📚 Corso di Laurea:** Informatica, Università di Firenze  
+**👤 Autore:** Matteo Diciotti
+**👨‍🏫 Relatore:** Prof. Daniele Baracchi
+**👩‍🔬 Correlatrice e correlatore:** PhD Giulia Bertazzini, Prof. Daniele Castellana
+**📚 Corso di Laurea:** Informatica, Università di Firenze
 **📅 Anno Accademico:** 2025/2026
 
 ---
