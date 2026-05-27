@@ -51,7 +51,15 @@
 \usepackage{caption}
 \usepackage{appendix}
 \usepackage{siunitx}
-\widowpenalty=10000
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\floatname{algorithm}{Algoritmo}
+\def\algorithmautorefname{Algoritmo}
+\algrenewcommand{\algorithmicrequire}{\textbf{Require:}}
+\algrenewcommand{\algorithmicensure}{\textbf{Ensure:}}
+% Controllo vedove/orfani: almeno 2 righe alla pagina successiva o nessuna
+\clubpenalties=3 600 600 600
+\widowpenalties=3 600 600 600
 \usepackage[pdftex]{graphicx} 
 \graphicspath{{./Figures/}}
 \usepackage[eulerchapternumbers,
@@ -147,8 +155,9 @@
 \include{Chapters/01-Introduzione}
 \include{Chapters/02-StatoDellArte}
 \include{Chapters/03-Definizioni}
-%\include{Chapters/04-Evaluation}
-%\include{Chapters/05-Conclusions}
+\include{Chapters/04-Proposta}
+\include{Chapters/05-Evaluation}
+\include{Chapters/06-Conclusions}
 
 %--------------------------------------------------------------
 % Bibliography

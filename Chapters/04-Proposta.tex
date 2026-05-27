@@ -1,0 +1,235 @@
+% !TEX root = ../Thesis.tex
+
+\chapter{Architettura del sistema proposto}
+\label{ch:proposta}
+
+\section{Visione d'insieme}
+\label{sec:visione-insieme}
+
+Nei capitoli precedenti sono stati presentati i fondamenti teorici necessari alla comprensione del lavoro, con particolare attenzione al protocollo \emph{Meteor} (Capitolo~\autoref{ch:stato-arte}) e all'architettura VQ-GAN. Il presente capitolo si propone di descrivere in dettaglio il sistema steganografico implementato, che estende il principio di \emph{Steganography without Embedding} (\textbf{SwE}) dal dominio testuale a quello visivo.
+
+L'idea fondante del sistema è la seguente: così come \emph{Meteor} utilizza un modello linguistico autoregressivo (GPT-2) per generare testo in cui il messaggio segreto determina la selezione dei token, allo stesso modo è possibile impiegare il \emph{Transformer} associato a una VQ-GAN per generare una sequenza di codici discreti (token visivi) in cui il messaggio segreto guida il campionamento. La sequenza di indici così prodotta viene quindi decodificata dall'architettura VQ-GAN per ottenere l'immagine finale, detta \emph{stego-image}.
+
+Il sistema si articola in due fasi principali:
+\begin{description}
+	\item[Encoding:] il mittente, dato un messaggio segreto, genera un'immagine contenente il messaggio cifrato nascosto nel processo di campionamento dei token visivi.
+	\item[Decoding:] il destinatario, in possesso dello stesso modello VQ-GAN e della stessa chiave condivisa, estrae il messaggio segreto dall'immagine ricevuta ricostruendo le distribuzioni di probabilità e recuperando i bit che hanno determinato la selezione dei token.
+\end{description}
+
+Un aspetto cruciale del sistema è la sua \emph{non intrusività}: il modello VQ-GAN non viene riaddestrato né modificato in alcun modo. Il messaggio segreto viene codificato esclusivamente durante la fase di inferenza del Transformer, orientando il campionamento dei token visivi senza alterare le distribuzioni di probabilità apprese dal modello. Questa proprietà garantisce che l'immagine generata sia statisticamente indistinguibile da una immagine prodotta dal medesimo modello in assenza di messaggio nascosto, realizzando di fatto una steganografia perfetta nel senso della definizione di \emph{perfectly secure steganography} introdotta in \cite{kaptchuk-2021}.
+
+\subsection{Flusso operativo del sistema}
+
+Il funzionamento complessivo del sistema può essere descritto nei seguenti passi, illustrati schematicamente in \autoref{fig:sistema-architettura}:
+
+\begin{figure}[htbp]
+\centering
+\frame{\includegraphics[width=\textwidth]{SistemaArchitettura}} % da creare
+\caption{Diagramma dell'architettura del sistema steganografico. Il messaggio segreto viene cifrato, quindi utilizzato per guidare il campionamento dei token visivi durante la generazione autoregressiva del Transformer. L'immagine finale viene ottenuta decodificando la sequenza di indici tramite il decoder VQ-GAN.}
+\label{fig:sistema-architettura}
+\end{figure}
+
+\begin{enumerate}
+	\item \textbf{Preparazione del contesto:} Viene selezionata un'immagine di contesto dal dataset di riferimento. Questa viene processata dall'encoder della VQ-GAN per ottenere una sequenza di indici discreti del codebook. Le prime $R$ righe della griglia di indici (dove $R$ è determinato dal parametro \texttt{context\_fraction}) fungono da contesto iniziale non steganografico e vengono preservate nell'immagine finale.
+	
+	\item \textbf{Inizializzazione della sequenza:} Gli indici corrispondenti alle prime $R$ righe vengono copiati in un tensore \emph{building} che conterrà progressivamente i token generati. Le restanti posizioni vengono azzerate.
+	
+	\item \textbf{Generazione autoregressiva vincolata:} Per ogni posizione della griglia a partire dalla riga $R+1$, il Transformer produce una distribuzione di probabilità $P(z_t | z_{<t})$ su tutti i $K$ codici del codebook, condizionata dal contesto locale costituito da una finestra di $16 \times 16$ token visivi. Il messaggio cifrato determina la selezione del token tramite un meccanismo di \emph{arithmetic coding}.
+	
+	\item \textbf{Ricostruzione dell'immagine:} Una volta completata la generazione di tutti i token della griglia, la sequenza di indici viene decodificata dal decoder VQ-GAN per produrre l'immagine finale.
+	
+	\item \textbf{Estrazione del messaggio:} Il destinatario, in possesso dello stesso modello, della stessa immagine di contesto (o della medesima informazione per ricostruirla) e della chiave condivisa, riesegue il processo di generazione delle distribuzioni e, confrontando i token effettivamente presenti nell'immagine ricevuta con le distribuzioni attese, estrae i bit del messaggio originale.
+\end{enumerate}
+
+\section{Architettura del sistema}
+\label{sec:architettura-dettaglio}
+
+Il sistema implementato si compone di tre macro-componenti, ciascuno dei quali svolge un ruolo specifico nel processo di codifica e decodifica steganografica:
+
+\begin{description}
+	\item[VQ-GAN:] costituisce l'architettura di base per la generazione delle immagini. Come descritto nel Capitolo~\autoref{ch:stato-arte}, essa comprende un \emph{Encoder} convoluzionale, un \emph{Codebook} di $K$ vettori latenti, un \emph{Decoder} (generatore) convoluzionale e un \emph{Transformer} autoregressivo per la modellazione della distribuzione di probabilità sugli indici discreti. Nel nostro sistema, il Transformer è il componente su cui si innesta il meccanismo steganografico.
+	
+	\item[SteganographyEncoder:] classe che implementa la fase di codifica del messaggio nell'immagine. Gestisce la selezione dei token visivi in funzione dei bit del messaggio e la costruzione progressiva della sequenza di indici. È implementata in \texttt{encode\_methods.py}.
+	
+	\item[SteganographyDecoder:] classe che implementa la fase di decodifica, estraendo il messaggio nascosto dall'immagine ricevuta. Ricostruisce le distribuzioni di probabilità e recupera i bit codificati. È implementata in \texttt{decode\_methods.py}.
+\end{description}
+
+\subsection{Rappresentazione delle immagini e griglia di patch}
+
+Un'immagine $\mathbf{x} \in \mathbb{R}^{H \times W \times C}$ viene processata dall'encoder VQ-GAN per produrre una mappa di feature latente $\hat{\mathbf{z}} \in \mathbb{R}^{h \times w \times n_z}$, dove $h = H / f$ e $w = W / f$ sono le dimensioni della griglia di patch e $f$ è il fattore di compressione spaziale (nell'implementazione utilizzata, $f = 16$). Ciascuna posizione $(i, j)$ della mappa latente viene quantizzata al vettore del codebook più vicino, producendo un indice discreto $s_{ij} \in \{1, \dots, K\}$. L'intera immagine viene quindi rappresentata come una matrice di indici $\mathbf{S} \in \{1, \dots, K\}^{h \times w}$.
+
+Nel sistema implementato, il Transformer opera su una finestra locale di dimensione $16 \times 16$ token. Per ciascuna posizione $(r, c)$ della griglia, il contesto è costruito concatenando due porzioni:
+\begin{itemize}
+	\item Gli indici della patch di riferimento (\emph{reference patch}), estratti dall'immagine di contesto;
+	\item Gli indici correntemente generati (\emph{building patch}), che includono i token già selezionati per le posizioni precedenti.
+\end{itemize}
+La funzione \texttt{build\_context\_from\_patches()} implementa questa operazione, utilizzando l'ausiliare \texttt{local\_indexes()} per determinare la finestra di dimensione $16 \times 16$ centrata sulla posizione corrente, gestendo i casi di bordo.
+
+\subsection{Le classi SteganographyEncoder e SteganographyDecoder}
+
+\texttt{SteganographyEncoder} è responsabile della generazione guidata dal messaggio. Il suo metodo principale, \texttt{encode\_message\_to\_image()}, coordina l'intero processo:
+\begin{enumerate}
+	\item Carica l'immagine di contesto e la codifica tramite \texttt{encode\_to\_z()} per ottenere gli indici di riferimento e la forma del tensore delle traduzioni.
+	\item Inizializza il tensore \texttt{building\_tensor} con gli indici di contesto, azzerando le posizioni oltre la soglia \texttt{context\_fraction}.
+	\item Itera su ciascuna posizione della griglia chiamando \texttt{encode\_patch()}, che a sua volta invoca \texttt{select\_token\_for\_patch()} per la selezione steganografica del token.
+	\item Una volta esaurito il messaggio, completa le posizioni rimanenti con campionamento casuale (\emph{random sampling}) per preservare la coerenza visiva.
+	\item Decodifica la sequenza di indici tramite \texttt{decode\_to\_img()} per produrre l'immagine finale.
+\end{enumerate}
+
+\texttt{SteganographyDecoder} implementa la fase inversa. Ripercorrendo le stesse posizioni della griglia, il metodo \texttt{decode\_message()}, anziché selezionare token in base al messaggio, estrae i bit confrontando il token effettivamente presente nell'immagine ricevuta (\texttt{stego\_indices}) con la distribuzione di probabilità attesa. La funzione \texttt{decode\_token\_from\_patch()} implementa l'estrazione dei bit mediante arithmetic coding inverso.
+
+\section{Algoritmo di encoding}
+\label{sec:encoding-algorithm}
+
+L'algoritmo di encoding costituisce il cuore del sistema. Il suo obiettivo è trasformare un messaggio testuale in un'immagine, codificando i bit del messaggio nella selezione dei token visivi durante la generazione autoregressiva.
+
+\subsection{Selezione steganografica del token}
+
+Il meccanismo di selezione del token (\autoref{alg:selezione-token}) implementa il principio alla base di \emph{Meteor}, adattato al dominio visivo: dato il contesto delle patch precedenti, il Transformer produce una distribuzione di probabilità su tutti i $K$ codici del codebook; il messaggio segreto determina quale token selezionare all'interno di questa distribuzione, e il numero di bit effettivamente codificati corrisponde al prefisso binario comune degli estremi dell'intervallo selezionato. Per preservare la qualità visiva, le code della distribuzione vengono troncate conservando solo i token con probabilità $p_i \ge 1/K$, e le probabilità residue vengono normalizzate e quantizzate nello spazio $\{0,\dots,K-1\}$.
+
+\begin{algorithm}[htbp]
+\caption{Selezione steganografica del token visivo}
+\label{alg:selezione-token}
+\begin{algorithmic}[1]
+\Require Contesto $\mathbf{c}$, messaggio binario $\mathbf{b}$, codebook size $K$, precisione $D$, top-$k$ $T$
+\Ensure Indice selezionato $i^*$, bit codificati $n$, intervallo $[b, t)$, bit $\mathbf{b}'$
+\State $\mathbf{l} \gets \text{Transformer}(\mathbf{c})$
+\State $\mathbf{p} \gets \text{softmax}(\mathbf{l})$
+\State $\mathcal{I} \gets \text{top}_{k}(\mathbf{p})$ con $k = \min\bigl(\max(2, |\{i : p_i \ge 1/K\}|),\, T\bigr)$
+\State $\hat{p}_i \gets \bigl\lfloor (p_i / \textstyle\sum_{j \in \mathcal{I}} p_j) \cdot K \bigr\rceil$ per $i \in \mathcal{I}$
+\State $C_i \gets \textstyle\sum_{j=1}^{i} \hat{p}_j$ per $i = 1, \dots, |\mathcal{I}|$
+\State $m \gets \mathrm{bits2int}(\mathbf{b}[0:D])$
+\State $i^* \gets \min\{i : C_i > m\}$
+\State $b \gets C_{i^*-1}$ (o $0$ se $i^*=1$),\quad $t \gets C_{i^*}$
+\State $n \gets \mathrm{count\_matching\_bits}\bigl(\mathrm{int2bits}(b, D),\; \mathrm{int2bits}(t-1, D)\bigr)$
+\State $\mathbf{b}' \gets \mathrm{int2bits}(b, D)[0:n]$
+\State \Return $\mathrm{indices}[i^*], n, b, t, \mathbf{b}'$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Verifica di codifica e flusso principale}
+
+Un aspetto critico del dominio visivo è la non-reversibilità dell'encoder VQ-GAN: a differenza di un modello linguistico, dove il token selezionato compare esattamente nell'output, per la VQ-GAN l'indice ottenuto ricodificando l'immagine generata può differire da quello originariamente scelto. Per garantire la corretta decodifica, ogni token selezionato viene verificato decodificando e ricodificando l'immagine parziale; in caso di discordanza, la selezione viene ripetuta (fino a 100 tentativi).
+
+\begin{algorithm}[htbp]
+\caption{Codifica vincolata di un singolo token}
+\label{alg:codifica-patch}
+\begin{algorithmic}[1]
+\Require Contesto di riferimento $\mathbf{R}$, tensore building $\mathbf{B}$, posizione $(r,c)$, forma griglia $(h,w)$, bit $\mathbf{b}$, flag \texttt{random\_sample}
+\Ensure Prossima posizione $(r', c')$, indice $i^*$, bit codificati $n$, nuovo bitstream $\mathbf{b}'$
+\State $(\mathbf{c}, \_) \gets \text{build\_context}(\mathbf{R}, \mathbf{B}, r, c, (h,w))$
+\Repeat
+\State $(i^*, n, b, t, \mathbf{b}') \gets \text{select\_token}(\mathbf{c}, \mathbf{b}, \text{flag}=\text{\texttt{random\_sample}})$
+\State $\mathbf{B}[r, c] \gets i^*$
+\State $\hat{\imath} \gets \text{encode\_to\_z}(\text{decode\_to\_img}(\mathbf{B}))[r, c]$
+\Until{$\text{\texttt{random\_sample}}$ \textbf{or} $\hat{\imath} = i^*$ \textbf{or} tentativi $> 100$}
+\State \Return $\text{prossima\_posizione}(r, c, (h,w)),\; i^*,\; n,\; \mathbf{b}'$
+\end{algorithmic}
+\end{algorithm}
+
+\autoref{alg:codifica-messaggio} coordina l'intero processo di encoding a livello di immagine: dopo aver preparato il contesto iniziale e i tensori di riferimento, itera sulle posizioni della griglia selezionando token guidati dal messaggio fino all'esaurimento dei bit, quindi completa le posizioni rimanenti con campionamento casuale per preservare la coerenza visiva.
+
+\begin{algorithm}[htbp]
+\caption{Codifica del messaggio in immagine}
+\label{alg:codifica-messaggio}
+\begin{algorithmic}[1]
+\Require Messaggio $M$, modello VQ-GAN, dataset $D$, \texttt{context\_fraction} $f$
+\Ensure Immagine $\mathbf{x}$, sequenza indici $\mathbf{s}$, bit residui $\mathbf{b}$
+\State $(\mathbf{R}, \mathbf{B}, r_0, (h,w)) \gets \text{prepara\_contesto}(\text{modello}, D, f)$
+\State $\mathbf{b} \gets \mathrm{string2bits}(M)$
+\State $(r, c) \gets (r_0, 0)$
+\While{$\mathbf{b} \neq \emptyset$ \textbf{and} $r < h$}
+\State $((r, c), i^*, n, \mathbf{b}') \gets \text{encode\_patch}(\mathbf{R}, \mathbf{B}, r, c, (h,w), \mathbf{b}[0:D])$
+\State $\mathbf{s} \gets \mathbf{s} \cup \{i^*\}$;\quad $\mathbf{b} \gets \mathbf{b}[n:]$
+\EndWhile
+\While{$r < h$}
+	\State $((r,c), i^*, \dots) \gets \text{encode\_patch}(\mathbf{R}, \mathbf{B}, r, c, (h,w), \text{\footnotesize{rand\_samp}}=\text{\footnotesize{True}})$
+\State $\mathbf{s} \gets \mathbf{s} \cup \{i^*\}$
+\EndWhile
+\State $\mathbf{x} \gets \text{decode\_to\_img}(\mathbf{B})$
+\State \Return $\mathbf{x}, \mathbf{s}, \mathbf{b}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Algoritmo di decoding}
+\label{sec:decoding-algorithm}
+
+L'algoritmo di decoding costituisce il processo inverso: data un'immagine ricevuta, il destinatario estrae il messaggio nascosto. La decodifica è possibile perché mittente e destinatario condividono lo stesso modello VQ-GAN, la stessa informazione di contesto (tipicamente un seme pseudo-casuale) e la stessa chiave simmetrica per la cifratura del messaggio.
+
+\subsection{Estrazione dei bit da un token}
+
+Il meccanismo di estrazione (\autoref{alg:decodifica-token}) è simmetrico rispetto all'encoding: per ciascuna posizione della griglia, la distribuzione di probabilità viene ricostruita applicando lo stesso troncamento e quantizzazione utilizzati in fase di codifica; il token effettivamente presente nell'immagine identifica l'intervallo $[C_{j-1}, C_j)$ corrispondente, e i bit vengono recuperati dal prefisso binario comune degli estremi dell'intervallo.
+
+\begin{algorithm}[htbp]
+\caption{Decodifica dei bit da un token visivo}
+\label{alg:decodifica-token}
+\begin{algorithmic}[1]
+\Require Contesto $\mathbf{c}$, token effettivo $z^*$, codebook size $K$, top-$k$ $T$
+\Ensure Bit decodificati $\mathbf{b}'$, intervallo $[b, t)$
+\State $\mathbf{l} \gets \text{Transformer}(\mathbf{c})$
+\State $\mathbf{p} \gets \text{softmax}(\mathbf{l})$
+\State $\mathcal{I} \gets \text{top}_{k}(\mathbf{p})$ con $k = \min\bigl(\max(2, |\{i : p_i \ge 1/K\}|),\, T\bigr)$
+\State $\hat{p}_i \gets \bigl\lfloor (p_i / \textstyle\sum_{j \in \mathcal{I}} p_j) \cdot K \bigr\rceil$ per $i \in \mathcal{I}$
+\State $C_i \gets \textstyle\sum_{j=1}^{i} \hat{p}_j$ per $i = 1, \dots, |\mathcal{I}|$
+\State $j \gets \text{posizione\_di}(z^*, \mathrm{indices}[0:|\mathcal{I}|])$
+\State $b \gets C_{j-1}$ (o $0$ se $j=0$),\quad $t \gets C_j$
+\State $n \gets \mathrm{count\_matching\_bits}\bigl(\mathrm{int2bits}(b, D),\; \mathrm{int2bits}(t-1, D)\bigr)$
+\State $\mathbf{b}' \gets \mathrm{int2bits}(b, D)[0:n]$
+\State \Return $\mathbf{b}', b, t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Flusso principale di decoding}
+
+\autoref{alg:decodifica-messaggio} illustra il processo completo: il destinatario ricostruisce le stesse distribuzioni di probabilità percorrendo la griglia nell'ordine raster, estrae i bit da ciascun token e ricompone il messaggio originale.
+
+\begin{algorithm}[htbp]
+\caption{Decodifica del messaggio dall'immagine}
+\label{alg:decodifica-messaggio}
+\begin{algorithmic}[1]
+\Require Immagine stego $\mathbf{x}$, modello VQ-GAN, contesto $D$
+\Ensure Messaggio decodificato $M'$, bit $\mathbf{b}'$
+\State $(\mathbf{R}, \mathbf{B}, r_0, (h,w)) \gets \text{prepara\_contesto}(\text{modello}, D, f)$
+\State $\text{stego\_indices} \gets \text{encode\_to\_z}(\mathbf{x})[1].\text{reshape}(h,w)$
+\State $(r, c) \gets (r_0, 0)$;\quad $\mathbf{b}' \gets \emptyset$
+\While{$r < h$}
+\State $(\mathbf{c}, \_) \gets \text{build\_context}(\mathbf{R}, \mathbf{B}, r, c, (h,w))$
+\State $z^* \gets \text{stego\_indices}[r, c]$
+\State $(\text{bits}, \_, \_) \gets \text{decode\_token}(\mathbf{c}, z^*)$
+\State $\mathbf{B}[r, c] \gets \text{stego\_indices}[r, c]$
+\State $\mathbf{b}' \gets \mathbf{b}' + \text{bits}$
+\State $(r, c) \gets \text{prossima\_posizione}(r, c, (h,w))$
+\EndWhile
+\State $M' \gets \mathrm{bits2string}(\mathbf{b}')$
+\State \Return $M', \mathbf{b}'$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Gestione del contesto e sliding window}
+\label{sec:gestione-contesto}
+
+Nel dominio visivo, a differenza di \emph{Meteor} dove il contesto è costituito dall'intera sequenza testuale, il Transformer della VQ-GAN opera su una finestra locale $16 \times 16$ centrata sulla posizione corrente. Per ciascuna posizione $(r, c)$ della griglia, il contesto viene costruito concatenando due finestre della stessa dimensione: una dagli indici di riferimento $\mathbf{R}$ (immagine di contesto originale) e una dagli indici in costruzione $\mathbf{B}$ (token già selezionati). La sequenza risultante di $2 \times 16 \times 16 = 512$ token viene appiattita e fornita come input al Transformer.
+
+Il parametro \texttt{context\_fraction} ($f$) determina quante righe iniziali della griglia vengono preservate dall'immagine di contesto originale. Con il valore predefinito $f = 0.1$, per una griglia $16 \times 16$ si preservano circa $25$ token di contesto. Un valore troppo basso riduce la qualità delle distribuzioni di probabilità; un valore troppo alto riduce la capacità steganografica complessiva.
+
+\section{Limitazioni teoriche e pratiche}
+\label{sec:limitazioni}
+
+Il sistema presenta alcune limitazioni intrinseche che è importante esplicitare.
+
+\subsection{Non-determinismo della VQ-GAN}
+
+L'encoder e il decoder della VQ-GAN non costituiscono funzioni inverse esatte:
+\[
+\text{Decoder}(\text{Encoder}(\mathbf{x})) \approx \mathbf{x}, \qquad
+\text{Encoder}(\text{Decoder}(\mathbf{z}_q)) \neq \mathbf{z}_q
+\]
+Questa asimmetria implica che il token selezionato durante l'encoding potrebbe non corrispondere a quello ottenuto ricodificando l'immagine. Il meccanismo di verifica descritto nel~\autoref{alg:codifica-patch} mitiga il problema, ma in casi estremi (quando nessun token supera la verifica entro 100 tentativi) la scelta viene forzata, con possibile perdita di bit.
+
+\subsection{Capacità steganografica}
+
+Per un'immagine $256 \times 256$, la griglia ha $16 \times 16 = 256$ token. Sottraendo $16$-$32$ token di contesto, restano circa $224$-$240$ token codificanti. Con precisione $D = 10$ bit, idealmente si potrebbero codificare fino a $10$ bit per token; in pratica, il numero effettivo dipende dall'entropia della distribuzione e si attesta in media tra $3$ e $7$ bit per token, per una capacità complessiva di circa $140$ caratteri ASCII per immagine.
+
+\subsection{Dipendenza dal modello e implicazioni per la sicurezza}
+
+L'efficacia del sistema dipende dalla qualità del modello VQ-GAN: un codebook più ricco offre maggiore flessibilità ma aumenta la complessità computazionale; un Transformer ben addestrato produce distribuzioni più \emph{sharp}, riducendo l'entropia e quindi la capacità. Il messaggio viene cifrato con chiave simmetrica prima della codifica, e la sicurezza steganografica è condizionata dal fatto che l'avversario non abbia accesso al modello specifico utilizzato.
