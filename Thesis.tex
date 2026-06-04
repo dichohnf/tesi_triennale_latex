@@ -44,6 +44,7 @@
 \bibliography{Bibliography} % Entries are in the Bibliography.bib file
 
 \usepackage{amsmath}
+\usepackage{mathtools}
 \usepackage{ellipsis}
 \usepackage{listings}
 \usepackage{enumitem}
@@ -107,6 +108,8 @@
 %--------------------------------------------------------------
 % Hyperlinks and references setting
 %--------------------------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds, calc}
 \usepackage{hyperref}
 \hypersetup{
 	colorlinks=true,
@@ -156,8 +159,9 @@
 \include{Chapters/02-StatoDellArte}
 \include{Chapters/03-Definizioni}
 \include{Chapters/04-Proposta}
-\include{Chapters/05-Evaluation}
-\include{Chapters/06-Conclusions}
+\include{Chapters/05-Implementazione}
+\include{Chapters/06-Evaluation}
+\include{Chapters/07-Conclusions}
 
 %--------------------------------------------------------------
 % Bibliography

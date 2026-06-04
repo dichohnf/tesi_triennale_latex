@@ -3,6 +3,7 @@
 \chapter{Stato dell'arte}\label{ch:stato-arte}
 
 \section[Meteor]{Meteor: un framework di steganografia generativa su testo}
+\label{sec:meteor}
 
 \subsection{Contesto e motivazioni}
 La necessità di una solida comprensione teorica, indispensabile per contestualizzare appieno il presente lavoro di ricerca, si articola attraverso una costellazione di concetti interdipendenti che convergono in un'unica opera fondamentale: \cite{kaptchuk-2021}, nominalmente nota come \emph{Meteor}. Questa indagine, che va oltre una mera disamina della steganografia classica e di quella generativa, introduce primariamente un approccio metodologico e, in secondo luogo, un framework robusto ed efficiente deputato alla \emph{generazione di messaggi testuali contenenti informazioni celate}.
@@ -73,6 +74,7 @@ Il testo risultante, coerente e naturale, transita sulla rete domestica senza de
 
 
 \section[VQ-GAN]{VQ-GAN: generazione di immagini ad alta risoluzione}
+\label{sec:vqgan}
 
 \subsection{Contesto e motivazioni}
 L'introduzione delle architetture GAN (Generative Adversarial Networks) ha rappresentato una svolta nel campo della generazione di immagini, consentendo la creazione di contenuti visivi di qualità, fino ad una dimensionalità massima (coerente) di 256$\times$256 pixel. Tuttavia, le GAN tradizionali hanno mostrato limitazioni significative nella generazione di immagini ad alta risoluzione, principalmente a causa della difficoltà nel mantenere la coerenza globale dell'immagine. In questo contesto, le VQ-GAN sono emerse come una soluzione innovativa, combinando i vantaggi delle GAN con un approccio di quantizzazione vettoriale che consente di generare immagini ad alta risoluzione in modo più efficiente. Gli indici derivanti dal processo di quantizzazione possono essere trattati come token, analogamente a quanto avviene nei modelli linguistici, e quindi essere processati da un trasformer o da un'architettura affine, come GPT-2, il quale permette di mantenere consistenza nelle relazioni a lunga distanza, superando così le limitazioni delle GAN tradizionali e introducendo coerenza non solo a livello sintattico -- capacità derivante dall'utilizzo di layer convolutivi -- ma anche a livello semantico. Le VQ-GAN, grazie alla loro capacità di apprendere rappresentazioni discrete e compatte delle immagini, hanno dimostrato di essere particolarmente efficaci nella generazione di contenuti visivi complessi e dettagliati, rendendole, per un periodo, la scelta preferita per modelli destinati alla generazione di immagini ad alta risoluzione. Il successo dei Diffusion Transformer, che hanno superato le VQ-GAN in termini di qualità e coerenza delle immagini generate, ha portato a un declino dell'utilizzo di queste ultime. Tuttavia, le VQ-GAN rimangono una pietra miliare nello sviluppo della generazione di immagini ad alta risoluzione e continuano a essere oggetto di studio e applicazione in vari contesti, inclusa la steganografia generativa.
