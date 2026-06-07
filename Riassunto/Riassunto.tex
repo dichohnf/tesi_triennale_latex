@@ -1,0 +1,37 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[
+  top=2cm,
+  bottom=2cm,
+  left=2cm,
+  right=2cm
+]{geometry}
+
+\begin{document}
+\pagestyle{empty}
+\noindent
+\textbf{Titolo italiano}: Steganografia generativa su immagini: adattamento del protocollo Meteor tramite l'architettura VQ-GAN\\
+\textbf{Titolo inglese}: Generative image steganography: adapting the Meteor protocol to the VQ-GAN architecture\\
+\textbf{Candidato}: Matteo Diciotti\\
+\textbf{Relatore}: Prof. Daniele Baracchi\\
+\textbf{Correlatrice}: PhD Giulia Bertazzini\\
+\textbf{Correlatore}: Prof. Daniele Castellana\\
+\textbf{Anno accademico}: 2025-2026\\
+\vspace{1ex}
+\hrule
+
+\section*{Riassunto}
+La steganografia è l'arte di nascondere informazioni all'interno di un mezzo di comunicazione, in modo che la presenza stessa dell'informazione nascosta sia difficile da rilevare. Rispetto alla crittografia, che protegge il contenuto ma è facilmente identificabile come traffico cifrato, la steganografia mira a rendere l'atto comunicativo stesso invisibile a un osservatore esterno.
+
+Questa tesi si inserisce nel paradigma della steganografia generativa senza embedding (Steganography without Embedding, SwE), in cui il messaggio segreto non viene nascosto in un contenuto preesistente, ma guida direttamente la generazione di un nuovo contenuto multimediale. Il lavoro estende il protocollo Meteor --- originariamente sviluppato per il dominio testuale e basato sul campionamento vincolato di token linguistici tramite arithmetic coding --- al dominio delle immagini digitali.
+
+L'architettura proposta utilizza la Vector Quantized Generative Adversarial Network (VQ-GAN) come modello di sintesi delle immagini. La VQ-GAN rappresenta le immagini attraverso un codebook discreto di token visivi, che vengono generati in modo autoregressivo da un Transformer. Il messaggio segreto cifrato determina la selezione di questi token durante la fase di campionamento, esattamente come Meteor fa con i token testuali, senza modificare i pesi pre-addestrati del modello e preservando l'indistinguibilità statistica dell'output generato.
+
+Viene presentata l'architettura completa del sistema, inclusi gli algoritmi dettagliati di encoding e decoding steganografico. Un aspetto critico affrontato è il non-determinismo intrinseco della VQ-GAN: l'encoder e il decoder non costituiscono funzioni inverse esatte, richiedendo un meccanismo di verifica della codifica per garantire la corretta estrazione del messaggio. Il sistema è implementato in Python con PyTorch, utilizzando il checkpoint pre-addestrato S-FLCKR (f=16) per la generazione di paesaggi naturali, e salva le immagini in formato PNG per preservare l'integrità dell'informazione.
+
+La tesi analizza le limitazioni teoriche e pratiche del sistema, inclusa la capacità steganografica (circa 140 caratteri ASCII per immagini 256$\times$256 pixel) e i costi computazionali asimmetrici tra encoding e decoding. Vengono inoltre delineati gli esperimenti previsti per la validazione del sistema, utilizzando metriche come la Fréchet Inception Distance (FID) per la qualità visiva e l'analisi della robustezza contro tentativi di rilevamento steganografico. 
+\end{document}
