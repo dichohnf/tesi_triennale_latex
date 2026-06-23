@@ -11,8 +11,8 @@
 %--------------------------------------------------------------
 % Inputs for the title page 
 %--------------------------------------------------------------
-\newcommand{\myItalianTitle}{Steganografia generativa su immagini:\\adattamento del protocollo Meteor tramite l'architettura VQ-GAN\xspace}
-\newcommand{\myEnglishTitle}{Generative Image Steganography:\\Adapting the Meteor Protocol to the VQ-GAN Architecture\xspace}
+\newcommand{\myItalianTitle}{Confronto di tecniche di steganografia tramite modelli generativi\xspace}
+\newcommand{\myEnglishTitle}{Comparing of steganography techniques using generative models\xspace}
 % use the right myDegree option
 \newcommand{\myDegree}{Corso di Laurea in Informatica\xspace}
 %\newcommand{\myDegree}{Corso di Laurea Magistrale in Informatica\xspace}
@@ -45,6 +45,7 @@
 
 \usepackage{amsmath}
 \usepackage{mathtools}
+\mathchardef\mhyphen="2D
 \usepackage{ellipsis}
 \usepackage{listings}
 \usepackage{enumitem}
@@ -137,7 +138,6 @@
 %--------------------------------------------------------------
 \pagenumbering{arabic}
 \tableofcontents
-\listoffigures
 \cleardoublepage
 \thispagestyle{empty}
 \begin{flushright}
@@ -158,12 +158,9 @@
 % Chapters
 %--------------------------------------------------------------
 \include{Chapters/01-Introduzione}
-\include{Chapters/02-StatoDellArte}
-\include{Chapters/03-Definizioni}
-\include{Chapters/04-Proposta}
-\include{Chapters/05-Implementazione}
-\include{Chapters/06-Evaluation}
-\include{Chapters/07-Conclusions}
+\include{Chapters/02-Fondamenti}
+\include{Chapters/03-Sperimentazione}
+\include{Chapters/04-Conclusioni}
 
 %--------------------------------------------------------------
 % Bibliography

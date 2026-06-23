@@ -1,0 +1,55 @@
+% !TEX root = ../Thesis.tex
+
+\chapter{Conclusioni}\label{ch:conclusioni}
+
+\section{Riepilogo dei risultati}
+
+Il presente lavoro ha investigato l'applicabilità del paradigma di \emph{Steganography without Embedding} (SwE) al dominio visivo, utilizzando come riferimento il framework Meteor per il dominio testuale e due architetture di tokenizzazione visiva: VQ-GAN e Open-MAGVIT2.
+
+Il percorso sperimentale ha permesso di identificare e isolare due problemi fondamentali:
+
+\begin{enumerate}
+	\item \textbf{Non-invertibilità del tokenizer}: l'architettura VQ-GAN, pur essendo strutturalmente analoga a un modello linguistico (codebook discreto + Transformer autoregressivo), non garantisce l'invertibilità del processo di encoding/decoding. L'encoder e il decoder sono funzioni statistiche apprese separatamente, non coppie di trasformazioni inverse. Il tentativo di fine tuning dell'encoder ha ridotto ma non eliminato l'errore, a causa del condizionamento laterale tra posizioni adiacenti nella griglia.
+	
+	\item \textbf{Propagazione dell'errore nel modello autoregressivo}: anche utilizzando un tokenizer intrinsecamente invertibile (Open-MAGVIT2 con LFQ), la natura autoregressiva del modello di generazione produce una cascata di errori: un singolo token alterato dal rumore del canale PNG corrompe tutte le predizioni successive, rendendo il recupero del messaggio impossibile (BER $\sim 65\%$).
+\end{enumerate}
+
+La verifica dell'equivalenza a livello di Transformer ha confermato che l'algoritmo di campionamento di Meteor è formalmente identico per token testuali e visivi -- il problema non è nell'algoritmo, ma nella fedeltà del canale di comunicazione. L'esperimento su canale lossless (token diretto, senza passaggio attraverso pixel) ha dimostrato un recupero esatto del 100\% dei bit, confermando la validità concettuale dell'approccio.
+
+L'embedding diretto nei piani di bit (QIM) ha dimostrato che, eliminando la dipendenza dal contesto autoregressivo, il canale visivo può supportare la comunicazione steganografica con recupero affidabile ($< 5\%$ BER, corretto da Reed-Solomon). Tuttavia, questo approccio costituisce un watermark rilevabile, non una steganografia statisticamente indistinguibile.
+
+\section{Contributi}
+
+I contributi principali di questa tesi sono:
+
+\begin{itemize}
+	\item L'identificazione e la caratterizzazione della \textbf{non-invertibilità della VQ-GAN} come fattore limitante per l'applicazione di SwE al dominio visivo, con analisi del tentativo di fine tuning e delle sue limitazioni.
+	
+	\item La dimostrazione dell'\textbf{equivalenza formale tra Meteor testuale e Meteor visivo} a livello di Transformer, che consente di separare il problema dell'algoritmo di campionamento dal problema del canale di comunicazione.
+	
+	\item L'identificazione della \textbf{propagazione dell'errore} come ostacolo fondamentale per sistemi SwE basati su modelli autoregressivi, con analisi del meccanismo di cascata e delle sue conseguenze.
+	
+	\item La validazione dell'\textbf{embedding diretto nei piani di bit della LFQ} come tecnica alternativa, dimostrando che Open-MAGVIT2 può supportare watermarking robusto su canale PNG, e la caratterizzazione della tensione fondamentale tra robustezza e impercettibilità.
+\end{itemize}
+
+\section{Lavori futuri}
+
+Sulla base dei risultati ottenuti, si possono delineare diverse direzioni per la ricerca futura:
+
+\begin{itemize}
+	\item \textbf{Sistemi ibridi AR-QIM}: una possibile direzione è combinare i due approcci, utilizzando il campionamento AR per la maggior parte dei token (garantendo indistinguibilità) e riservando alcuni piani di bit per la correzione d'errore o la verifica di integrità.
+	
+	\item \textbf{Estrazione appresa (learned-extractor watermarking)}: approcci come HiDDeN, RoSteALS o Stable Signature addestrano una piccola rete neurale per leggere una perturbazione distribuita e impercettibile, simulando il canale durante l'addestramento. Questi metodi possono potenzialmente superare la tensione robustezza/impercettibilità, sebbene al costo di non garantire indistinguibilità statistica nel senso di Meteor.
+	
+	\item \textbf{Modelli generativi non autoregressivi}: tokenizer basati su modelli di diffusione, che non presentano la dipendenza sequenziale causa della cascata di errori, potrebbero offrire un compromesso più favorevole tra indistinguibilità e robustezza.
+	
+	\item \textbf{Canali di trasmissione ottimizzati}: l'analisi del canale PNG/uint8 potrebbe essere estesa a formati lossy (JPEG, WebP), con l'obiettivo di caratterizzare la sopravvivenza dei codici LFQ sotto compressione e progettare schemi di embedding robusti a tali trasformazioni.
+	
+	\item \textbf{Risoluzione adattativa}: la capacità del carrier reale di scalare con la risoluzione dell'immagine suggerisce la possibilità di sistemi che adattano dinamicamente il payload in funzione delle dimensioni dell'immagine disponibile, mantenendo bassa la strength per preservare la qualità visiva.
+\end{itemize}
+
+\section{Considerazioni finali}
+
+Il lavoro presentato in questa tesi dimostra che la trasposizione del paradigma SwE dal dominio testuale a quello visivo è \textbf{concettualmente possibile ma praticamente vincolata} da limitazioni strutturali dei tokenizzatori e dei modelli autoregressivi attuali. La principale barriera non è algoritmica (l'arithmetic coding funziona correttamente sui token visivi) ma ingegneristica: la mancanza di un canale di comunicazione lossless tra il mondo dei token e il mondo dei pixel.
+
+L'embedding diretto nei piani di bit offre una soluzione pragmatica che sacrifica l'indistinguibilità in favore della robustezza, posizionandosi come watermark piuttosto che come steganografia. Il confine tra queste due discipline -- entrambe affascinanti e entrambe necessarie -- è proprio il punto in cui la presente sperimentazione si è arenata, e dove la ricerca futura potrà raccogliere la sfida.

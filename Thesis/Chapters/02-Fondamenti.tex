@@ -1,0 +1,195 @@
+% !TEX root = ../Thesis.tex
+
+\chapter{Fondamenti teorici e framework di riferimento}\label{ch:fondamenti}
+
+Questo capitolo introduce i concetti fondamentali, le definizioni e i framework necessari per comprendere il percorso sperimentale descritto nei capitoli successivi. L'esposizione procede per livelli di astrazione crescente: dalla steganografia classica agli algoritmi generativi, fino agli specifici modelli architetturali impiegati nella sperimentazione.
+
+\section{Steganografia: definizioni e principi}
+
+\subsection{Il modello di comunicazione steganografica}
+
+La steganografia è la disciplina che si occupa di occultare l'esistenza stessa di una comunicazione all'interno di un oggetto multimediale apparentemente innocuo \cite{turch-2020}. A differenza della crittografia, che protegge il contenuto del messaggio rendendolo inaccessibile, la steganografia nasconde il fatto stesso che una comunicazione stia avvenendo.
+
+Il modello classico di comunicazione steganografica coinvolge i seguenti attori e oggetti:
+
+\begin{description}
+	\item[Mittente:] intende inviare un messaggio segreto $M$ al destinatario senza che un attore intermedio (un \emph{ISP} per esempio), o \textit{Avversario}, possa rilevare la presenza della comunicazione.
+	\item[Destinatario:] riceve e decodifica il messaggio nascosto.
+	\item[Avversario:] osserva il canale di comunicazione e tenta di determinare se un messaggio nascosto sia presente (steganalisi).
+	\item[Cover-Object]: oggetto multimediale originale, nella sua forma inalterata, che funge da contenitore all'interno del quale si intende occultare un messaggio segreto.
+	\item [Stego-object]: oggetto risultante dall'incorporazione del messaggio segreto all'interno del coverobject. La proprietà fondamentale che tale artefatto deve soddisfare è l'indistinguibilità percettiva e statistica dal coverobject originale \cite{simmons-1984}. Nel caso di \emph{Meteor} o delle VQ-GAN, il termine si riferisce all'oggetto \textbf{generato} che contiene l'informazione segreta codificata, che non è in senso stretto un "oggetto modificato" ma un "oggetto creato" ad hoc. In questo contesto, il termine "stegoobject" è usato in modo estensivo per indicare qualsiasi output generato che contenga un messaggio segreto, indipendentemente dal fatto che sia stato ottenuto tramite embedding o generazione ex novo.
+\end{description}
+
+Nel contesto della \emph{Steganography without Embedding} (\textbf{SwE}), quindi, i termini assumono un'accezione estesa: poiché lo stego-object non è un cover-object modificato in senso stretto, sebbene come vedremo con \emph{VQ-GAN} alcune architetture generino immagini a partire da altre immagini, ma è un oggetto \textbf{generato} a partire dal contesto, che può comprendere un'immagine nota, e un messaggio segreto. L'indistinguibilità è garantita dalla qualità del modello generativo, che deve produrre output statisticamente equivalenti a campioni naturali o in alternativa a prodotti tipici del medesimo processo generativo sottratto il messaggio segreto. Quest'ultimo caso si applica in particolare nei contesti nei quali i prodotti di modelli generativi risultano fruiti dagli utenti finali e quindi plausibilmente trasmessi attraverso canali di comunicazione, come sempre maggiormente accade con i modelli di generazione di immagini e video.
+
+\subsection{Steganalisi e indistinguibilità statistica}
+
+La steganalisi è la disciplina deputata al rilevamento di messaggi occulti all'interno di oggetti multimediali, avvalendosi di metodologie di analisi statistica e apprendimento automatico \cite{apau-2024}. La steganalisi moderna impiega tecniche sempre più sofisticate per esaminare le proprietà statistiche degli oggetti multimediali.
+
+La nozione di \textbf{perfectly secure steganography} \cite{kaptchuk-2021} definisce le condizioni per cui un sistema steganografico è sicuro: uno stego-object è perfettamente sicuro se la sua distribuzione di probabilità è identica a quella dei cover-object naturali prodotti dal medesimo processo generativo. Formalmente, sia $\mathcal{G}$ un modello generativo che produce campioni dalla distribuzione $P_\mathcal{G}$, e sia $\mathcal{S}$ un sistema steganografico che, dati un messaggio $M$ e una chiave segreta $K$, produce uno stego-object $\mathbf{x}$. Sia $P_\mathcal{S}(\mathbf{x} \mid M)$ la distribuzione di probabilità degli stego-object generati da $\mathcal{S}$ per il messaggio $M$, marginalizzata su tutte le possibili chiavi $K$ (la cui scelta casuale fornisce l'entropia necessaria a garantire l'indistinguibilità). Il sistema è perfettamente sicuro se:
+\[
+\forall M,\quad P_\mathcal{G}(\mathbf{x}) = P_\mathcal{S}(\mathbf{x} \mid M).
+\]
+In altre parole, per qualsiasi messaggio $M$, un osservatore che esamina $\mathbf{x}$ non può determinare se esso provenga dal modello generativo $\mathcal{G}$ o dal sistema steganografico $\mathcal{S}$, poiché le due distribuzioni sono indistinguibili.
+
+\subsection{Steganografia senza embedding (SwE)}
+
+La \emph{Steganography without Embedding} (\textbf{SwE}) rappresenta un cambio di paradigma rispetto alla steganografia classica: invece di modificare un cover-object preesistente inserendoci un messaggio segreto all'interno (\emph{embedding}), il cover-object stesso viene \emph{generato ex novo} a partire dal messaggio segreto. Un modello generativo produce un artefatto multimediale la cui struttura è determinata dai bit del messaggio da occultare.
+
+Poiché non esiste un cover-object originale di riferimento, la steganalisi classica basata sul confronto tra cover e stego risulta inefficace. L'indistinguibilità è garantita esclusivamente dalla qualità del modello generativo. Paradigmi come \textbf{Meteor} per il dominio testuale e la presente sperimentazione per il dominio visivo rappresentano istanze di questo approccio, sebbene permanga la necessità di un immagine preesistente come contesto per la generazione, che può essere utilizzata, entro certe misure per il confronto statistico steganalitico.
+
+\subsection{Metriche e proprietà}
+
+Nel corso della trattazione verranno utilizzati i seguenti concetti quantitativi:
+
+\begin{itemize}
+	\item \textbf{Payload}: quantità di informazione segreta, espressa in bit o byte, che può essere occultata all'interno di un singolo oggetto multimediale senza comprometterne l'integrità statistica.
+	\item \textbf{Bitrate variabile}: strategia di codifica in cui la quantità di informazione incorporata in ciascun token può variare dinamicamente in funzione delle caratteristiche del contesto e della distribuzione di probabilità. In contesti a bassa entropia il sistema può astenersi dalla codifica, mentre in scenari ad alta entropia può codificare un numero maggiore di bit per token (\emph{Meteor}).
+	\item \textbf{Token flip rate}: frazione di token che subiscono una modifica (un \emph{flip}) durante un processo di ricodifica. Nel contesto della presente sperimentazione, misura la proporzione di token visivi che non sopravvivono al passaggio encoding $\to$ rendering $\to$ decoding (\emph{OpenMAGVIT2}).
+	\item \textbf{Per-bit flip rate}: probabilità che un singolo bit (o dimensione latente) venga alterato durante il passaggio attraverso un canale rumoroso.
+\end{itemize}
+
+
+\section{Il modello Meteor}
+
+Meteor \cite{kaptchuk-2021} è un framework steganografico a chiave simmetrica che realizza il paradigma SwE nel dominio testuale utilizzando un modello linguistico autoregressivo (GPT-2). Il principio fondante è il seguente: poiché un LLM genera testo campionando da una distribuzione di probabilità sui token successivi, è possibile \emph{guidare deterministicamente} questa selezione utilizzando i bit del messaggio segreto, piuttosto che campionare casualmente.
+
+\subsection{Funzionamento generale}
+
+Il protocollo si articola nelle seguenti fasi:
+
+\begin{enumerate}
+	\item \textbf{Codifica steganografica}: dato un messaggio segreto $M$ e una chiave $K$, il sistema genera un testo $T$ (lo \emph{stego-text}) in cui il messaggio è nascosto. La generazione avviene passo-passo: a ciascun passo temporale $t$, il modello produce una distribuzione di probabilità $\mathbf{p}_t = P(\cdot \mid \mathbf{x}_{<t})$ sull'intero vocabolario. I bit del messaggio determinano la selezione del token $x_t$ tramite un meccanismo di \emph{arithmetic coding} sul prefisso della distribuzione troncata.
+	\item \textbf{Decodifica steganografica}: il destinatario, in possesso dello stesso modello e della stessa chiave, ripercorre la sequenza di token. Per ciascuna posizione, ricostruisce la medesima distribuzione di probabilità e, confrontando il token effettivamente presente nel testo ricevuto con la distribuzione attesa, recupera i bit del messaggio originale.
+\end{enumerate}
+
+\subsection{Arithmetic coding steganografico}
+\label{sec:meteor-arithmetic}
+
+Il campionamento steganografico dei token in \emph{Meteor} è realizzato mediante \emph{arithmetic coding}, la tecnica di codifica entropica su cui l'intero framework si fonda.
+
+Il messaggio segreto, una volta cifrato, viene rappresentato come una sequenza binaria. A ciascun passo di generazione $t$, il modello produce una distribuzione di probabilità sul vocabolario. I token con probabilità inferiore a una soglia prefissata vengono esclusi per evitare la selezione forzata di token improbabili, e le probabilità dei token rimanenti vengono rinormalizzate. Fissata una precisione di $D$ bit, l'intervallo discreto $[0, 2^D)$ viene ripartito in sotto-intervalli cumulativi proporzionali alle probabilità così ottenute, associando a ciascun token superstite un intervallo $[C_{i\mhyphen1}, C_i)$. Si preleva quindi dalla testa del messaggio un blocco di $D$ bit, lo si interpreta come intero $m \in [0, 2^D)$, e si seleziona il token $i^*$ il cui intervallo cumulativo contiene $m$, ovvero tale che $C_{i^*\mhyphen1} \le m < C_{i^*}$. Il numero di bit effettivamente codificati da questo token è dato dalla lunghezza del prefisso binario comune tra l'estremo sinistro $C_{i^*\mhyphen1}$ e l'estremo destro $C_{i^*}\mhyphen1$: tali bit vengono consumati, cioè rimossi dalla testa della sequenza del messaggio, e il procedimento si ripete al passo successivo.
+
+La decodifica è simmetrica: data la stessa distribuzione e l'indice del token $i^*$ presente nello stego-text, si determina l'intervallo $[C_{i^*-1}, C_{i^*})$ e si estrae il prefisso binario comune.
+
+\subsection{Garanzie di sicurezza}
+
+La sicurezza di Meteor poggia su due proprietà fondamentali:
+
+\begin{itemize}
+	\item \textbf{Indistinguibilità statistica}: i token vengono selezionati dalla stessa distribuzione di probabilità del modello, quindi la distribuzione degli stego-text coincide con quella dei testi naturali generati dal modello.
+	\item \textbf{Soglia di entropia}: il sistema si astiene dalla codifica in contesti a bassa entropia (dove la distribuzione è molto concentrata su pochi token), prevenendo la selezione forzata di token improbabili.
+\end{itemize}
+
+
+\section{Architetture per la generazione visuale}
+
+Questa sezione introduce le architetture di deep learning utilizzate nel percorso sperimentale per la generazione e la tokenizzazione delle immagini.
+
+\subsection{Transformer}
+
+L'architettura Transformer \cite{vaswani-2017} costituisce il fondamento dei moderni modelli generativi sia nel dominio testuale che in quello visivo. Il suo componente chiave è il meccanismo di \emph{self-attention}, che permette a ciascuna posizione di una sequenza di aggregare informazioni da tutte le altre posizioni con pesi determinati dinamicamente.
+
+Nel contesto della generazione di immagini, il Transformer viene impiegato per modellare la sequenza di token visivi in modo autoregressivo. Data una sequenza di $\ell$ token $\mathbf{s} = (s_1, \dots, s_\ell)$, l'architettura fattorizza la probabilità congiunta come:
+\[
+P(\mathbf{s}) = \prod_{t=1}^\ell P(s_t \mid s_{<t}).
+\]
+La generazione procede quindi iterativamente: a ogni passo $t$, il modello produce una distribuzione di probabilità sul prossimo token $s_t$ condizionata dai token già generati $s_{<t}$.
+
+\subsection{VQ-GAN}
+
+La \emph{Vector Quantized-Generative Adversarial Network} (\textbf{VQ-GAN}) \cite{esser-2020} è un'architettura che integra quantizzazione vettoriale, un autoencoder convoluzionale e una loss avversaria per la generazione di immagini di alta qualità. La VQ-GAN si compone di due stadi:
+
+\subsubsection{Primo stadio: tokenizer convoluzionale}
+
+Il primo stadio è un autoencoder convoluzionale che trasforma un'immagine in una griglia di token discreti e la ricostruisce. I componenti principali sono:
+
+\begin{itemize}
+	\item \textbf{Encoder convoluzionale} $E$: riduce la risoluzione spaziale dell'immagine $\mathbf{x} \in \mathbb{R}^{H \times W \times C}$ mediante strati convoluzionali con striding, producendo una mappa di feature $\hat{\mathbf{z}} \in \mathbb{R}^{h \times w \times n_z}$, dove $h = H/f$, $w = W/f$ e $f$ è il fattore di compressione spaziale (tipicamente $f = 16$).
+	
+	\item \textbf{Codebook} $\mathcal{K} = \{\mathbf{e}_1, \dots, \mathbf{e}_K\}$: un insieme di $K$ vettori latenti appresi (tipicamente $K = 2^{14}$). Ciascuna posizione $(i,j)$ della mappa latente $\hat{\mathbf{z}}$ viene quantizzata al vettore del codebook più vicino in norma euclidea:
+	\[
+	\mathbf{z}_q^{(i,j)} = \mathbf{e}_{k^*}, \quad k^* = \arg\min_k \|\hat{\mathbf{z}}^{(i,j)} - \mathbf{e}_k\|_2.
+	\]
+	L'immagine viene quindi rappresentata come una griglia di indici $\mathbf{S} \in \mathcal{K}^{h \times w}$.
+	
+	\item \textbf{Decoder convoluzionale} $G$: trasforma la griglia di vettori quantizzati $\mathbf{z}_q$ nuovamente nello spazio immagine, tramite strati di transposed convolution che effettuano upsampling fino alla risoluzione originale.
+\end{itemize}
+
+\subsubsection{Funzione di loss e addestramento}
+
+La VQ-GAN introduce due innovazioni rispetto alla VQ-VAE \cite{van-den-oord-2017}, sua precorritrice:
+
+\begin{itemize}
+	\item \textbf{Loss avversaria}: un discriminatore PatchGAN \cite{isola-2017} viene addestrato a distinguere immagini reali da ricostruzioni, mentre il decoder cerca di ingannarlo. Questo produce ricostruzioni più nitide, specialmente nelle texture ad alta frequenza.
+	
+	\item \textbf{Loss percettiva}: le attivazioni di una rete VGG-16 \cite{simonyan-2015} pre-addestrata vengono confrontate tra immagine originale e ricostruita a vari livelli di astrazione, penalizzando deviazioni semantiche.
+\end{itemize}
+
+\subsubsection{Secondo stadio: Transformer autoregressivo}
+
+Il secondo stadio è un modello Transformer autoregressivo che apprende la distribuzione dei token visivi sulla griglia. Dato un contesto di $p \times p$ token, il modello prevede la distribuzione di probabilità sul token successivo. Questo stadio opera esclusivamente sugli indici discreti del codebook e non interagisce direttamente con lo spazio immagine.
+
+\subsection{Open-MAGVIT2 e Lookup-Free Quantization (LFQ)}
+
+\emph{Open-MAGVIT2} \cite{luo-2024} è un tokenizer visivo all'avanguardia che introduce la \emph{Lookup-Free Quantization} (\textbf{LFQ}), una tecnica di quantizzazione che elimina la necessità di un codebook esplicito.
+
+\subsubsection{Principio della LFQ}
+\label{sec:lfq}
+
+A differenza della VQ-GAN, dove ciascun vettore latente $\hat{\mathbf{z}}^{(i,j)} \in \mathbb{R}^{n_z}$ viene confrontato per similarità con tutti i $K$ vettori del codebook — un'operazione di costo $\mathcal{O}(K \cdot n_z)$ per posizione spaziale — la LFQ quantizza ciascuna dimensione latente in modo indipendente, eliminando del tutto il codebook. Un'immagine viene processata da un encoder convoluzionale che produce, per ciascuna posizione spaziale, un vettore di $d$ scalari latenti $\hat{\mathbf{z}}^{(i,j)} \in \mathbb{R}^d$. Ciascuno scalare viene quantizzato al proprio \textbf{segno} ($+1$ o $-1$), producendo un codice binario di $d$ bit per posizione spaziale. Formalmente:
+\[
+\mathbf{z}_q^{(i,j)}[k] = \mathrm{sign}\Bigl(\hat{\mathbf{z}}^{(i,j)}[k]\Bigr) \in \{-1, +1\}, \quad k = 1, \dots, d.
+\]
+
+L'insieme dei possibili codici è quindi lo spazio $\{-1, +1\}^d$, che in Open-MAGVIT2 ha dimensione $d = 18$ bit, per un totale implicito di $2^{18} = 262\,144$ possibili codici. Non essendo necessaria una ricerca nel codebook, la quantizzazione ha costo $\mathcal{O}(d)$ per posizione, da cui il nome ``lookup-free''.
+
+\subsubsection{Fattorizzazione asimmetrica}
+
+In Open-MAGVIT2, i $18$ bit vengono suddivisi in due sottotoken:
+
+\begin{itemize}
+	\item \textbf{Pre-token} (\texttt{pre}): 6 bit (bit 0--5, corrispondenti a $2^6 = 64$ possibili valori).
+	\item \textbf{Post-token} (\texttt{post}): 12 bit (bit 6--17, corrispondenti a $2^{12} = 4096$ possibili valori).
+\end{itemize}
+
+Il modello autoregressivo (\emph{Net2NetTransformer}) predice prima il \texttt{pre}, poi il \texttt{post} condizionato dal \texttt{pre}. Questa fattorizzazione asimmetrica $[6, 12]$ è motivata da considerazioni di efficienza computazionale: lo spazio di ricerca del primo sottotoken è ridotto (64 opzioni), mentre il secondo sottotoken ha maggiore capacità espressiva.
+
+Un aspetto architetturale importante è lo \textbf{ShiftPermuter}, un modulo che riordina la sequenza di token tra la disposizione raster (righe della griglia) e l'ordine di generazione del Transformer. È cruciale utilizzare le funzioni \texttt{encode\_to\_z} e \texttt{decode\_to\_img} fornite dal modello, che applicano e rimuovono automaticamente la permutazione. Un uso diretto delle funzioni di encoder/decoder senza passare attraverso queste astrazioni produce una griglia con i token disposti in un ordine scorretto (permutati in modo incoerente rispetto all'originale) e un flip rate dei token prossimo al 100\%.
+
+\subsubsection{Invertibilità della LFQ}
+
+La LFQ è intrinsecamente invertibile: poiché il codice è determinato unicamente dal segno di ciascuna dimensione latente, e la decodifica è una semplice mappa dal codice binario allo spazio immagine, non esiste ambiguità nel processo di quantizzazione. Questo rappresenta un vantaggio fondamentale rispetto alla VQ-GAN, dove la quantizzazione tramite codebook introduce una perdita informativa.
+
+\subsubsection{Il canale di trasmissione e l'errore di ricodifica}
+
+Nella sperimentazione descritta in questa tesi, il ``canale'' di trasmissione considerato è il seguente: una griglia di token viene convertita in un'immagine PNG a 8 bit (formato lossless, ma quantizzato a \texttt{uint8}), trasmessa, ricaricata e riconvertita in token. La domanda cruciale è quanto fedelmente i token sopravvivano a questo round-trip.
+
+Le misurazioni empiriche sul modello reale mostrano:
+
+\begin{itemize}
+	\item \textbf{Token flip rate} $\approx 16.8\%$: circa un token su sei viene alterato.
+	\item \textbf{Per-bit flip rate} $\approx 1.1\%$: la probabilità che un singolo bit di una dimensione latente venga alterato nel passaggio attraverso il canale è circa l'1\%.
+\end{itemize}
+
+La relazione tra i due valori segue la formula $1 \mhyphen (1 \mhyphen 0.011)^{18} \approx 0.18$: un token subisce un flip se \emph{almeno uno} dei suoi 18 bit viene alterato. Questo divario (1\% a livello di bit, 18\% a livello di token) è fondamentale per comprendere le strategie di embedding descritte nel \autoref{ch:sperimentazione}: uno schema che tratta il token come simbolo atomico vede un canale con il 18\% di rumore; uno schema che opera a livello di bit vede un canale con solo l'1\% di rumore.
+
+\section{Terminologia tecnica comune}
+
+Nel corso della trattazione vengono impiegati i seguenti termini tecnici:
+
+\begin{itemize}
+	\item \textbf{Autoregressività}: proprietà per cui la generazione di ciascun elemento di una sequenza dipende esclusivamente dagli elementi precedenti. Formalmente, $P(x_1, \dots, x_n) = \prod_{t=1}^n P(x_t \mid x_{<t})$.
+	
+	\item \textbf{Quantizzazione}: processo di discretizzazione di uno spazio di rappresentazione continuo in un insieme finito di valori atomici.
+	
+	\item \textbf{Entropia}: misura dell'incertezza associata alla distribuzione di probabilità dei token generati da un modello. Maggiore è l'entropia, maggiore è la capacità di codificare informazione senza compromettere la naturalezza statistica.
+	
+	\item \textbf{Logits}: valori numerici prodotti dall'ultimo strato di un modello generativo prima dell'applicazione della funzione softmax per ottenere la distribuzione di probabilità.
+	
+	\item \textbf{Fine tuning}: addestramento supplementare di un modello pre-addestrato su un dataset o un obiettivo specifico, con tasso di apprendimento ridotto per preservare le conoscenze acquisite.
+	
+	\item \textbf{QIM (Quantization Index Modulation)}: tecnica di watermarking che modula l'indice di quantizzazione di un segnale per incorporare informazione. Nel contesto della LFQ, consiste nel forzare il segno di dimensioni latenti selezionate per codificare i bit del messaggio.
+	
+	\item \textbf{Propagazione dell'errore} (\emph{error cascade}): fenomeno per cui un singolo errore in una sequenza generata autoregressivamente corrompe tutte le predizioni successive, poiché ogni token $x_t$ dipende da tutti i token precedenti $x_{<t}$.
+\end{itemize}
