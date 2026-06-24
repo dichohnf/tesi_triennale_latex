@@ -91,6 +91,12 @@ Il messaggio segreto, una volta cifrato, viene rappresentato come una sequenza b
 
 La decodifica è simmetrica: data la stessa distribuzione e l'indice del token $i^*$ presente nello stego-text, si determina l'intervallo $[C_{i^*-1}, C_{i^*})$ e si estrae il prefisso binario comune.
 
+\subsection{Il canale testuale come canale privo di rumore}\label{sec:canale-testuale}
+
+Meteor, e più in generale qualsiasi schema di SwE applicato al dominio testuale, beneficia di una proprietà che può apparire ovvia ma che è invece decisiva quando si tenta la trasposizione ad altri domini mediali: il testo, nella sua rappresentazione digitale, costituisce un \emph{canale di comunicazione intrinsecamente privo di rumore}. I byte che rappresentano le frasi generate vengono trasmessi in maniera precisa: non subiscono compressione con perdita di informazione, né quantizzazione, né alcun altro tipo di degradazione. Di conseguenza, il token $x_t$ selezionato dal mittente durante la codifica steganografica è \emph{esattamente} il token che il destinatario legge durante la decodifica.
+
+Questa proprietà è il fondamento silenzioso su cui poggia l'intero meccanismo di Meteor. L'arithmetic coding descritto nella sezione precedente presuppone che la sequenza di token su cui il mittente si è condizionato sia la stessa che il destinatario osserverà, condizione che nel dominio testuale è sempre verificata. Nel dominio visivo, al contrario, il passaggio attraverso i pixel introduce inevitabilmente una forma di rumore di canale: la quantizzazione a 8~bit per canale colore, la compressione (anche in formati considerati \textit{lossless} come il PNG, che quantizzano comunque a \texttt{uint8}) e, più in generale, qualsiasi trasformazione dell'immagine alterano i token visivi tra il momento in cui vengono generati e il momento in cui vengono ricodificati dal destinatario. Come si vedrà nel \autoref{ch:sperimentazione}, questa differenza fondamentale — un canale testuale \emph{lossless} contrapposto a un canale visivo inevitabilmente \emph{lossy} — è la ragione ultima per cui Meteor funziona con affidabilità completa nel dominio per cui è stato progettato, e al contempo la causa primaria delle difficoltà che si incontrano nel trasporlo alle immagini.
+
 \subsection{Garanzie di sicurezza}
 
 La sicurezza di Meteor poggia su due proprietà fondamentali:
