@@ -1,4 +1,4 @@
-\documentclass[a4paper, 12pt]{article}
+\documentclass[a4paper, 11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[italian]{babel}
@@ -14,8 +14,8 @@
 \begin{document}
 \pagestyle{empty}
 \noindent
-\textbf{Titolo italiano}: Steganografia generativa su immagini: adattamento del protocollo Meteor tramite l'architettura VQ-GAN\\
-\textbf{Titolo inglese}: Generative image steganography: adapting the Meteor protocol to the VQ-GAN architecture\\
+\textbf{Titolo italiano}: Confronto di tecniche di steganografia tramite modelli generativi\\
+\textbf{Titolo inglese}: Comparing of steganography techniques using generative models\\
 \textbf{Candidato}: Matteo Diciotti\\
 \textbf{Relatore}: Prof. Daniele Baracchi\\
 \textbf{Correlatrice}: PhD Giulia Bertazzini\\
@@ -25,13 +25,15 @@
 \hrule
 
 \section*{Riassunto}
-La steganografia è l'arte di nascondere informazioni all'interno di un mezzo di comunicazione, in modo che la presenza stessa dell'informazione nascosta sia difficile da rilevare. Rispetto alla crittografia, che protegge il contenuto ma è facilmente identificabile come traffico cifrato, la steganografia mira a rendere l'atto comunicativo stesso invisibile a un osservatore esterno.
+La steganografia occulta l'esistenza di una comunicazione dentro oggetti multimediali innocui. Mentre la crittografia produce traffico cifrato identificabile, la steganografia mira all'indistinguibilità statistica del flusso comunicativo. Un paradigma recente è la \emph{Steganography without Embedding} (SwE), in cui il messaggio segreto guida la generazione di un nuovo artefatto invece di essere nascosto in un contenuto preesistente. L'esempio principale è Meteor, un algoritmo a chiave simmetrica che sfrutta un Large Language Model per pilotare i token testuali via arithmetic coding, producendo stego-text indistinguibili dall'output del modello.
 
-Questa tesi si inserisce nel paradigma della steganografia generativa senza embedding (Steganography without Embedding, SwE), in cui il messaggio segreto non viene nascosto in un contenuto preesistente, ma guida direttamente la generazione di un nuovo contenuto multimediale. Il lavoro estende il protocollo Meteor --- originariamente sviluppato per il dominio testuale e basato sul campionamento vincolato di token linguistici tramite arithmetic coding --- al dominio delle immagini digitali.
+Questa tesi indaga se un approccio analogo a Meteor sia applicabile al dominio visivo. L'obiettivo non è un sistema pronto all'uso, ma esplorare le condizioni in cui un modello generativo visuale può fungere da sampler steganografico, individuando i fattori che lo rendono possibile o lo limitano.
 
-L'architettura proposta utilizza la Vector Quantized Generative Adversarial Network (VQ-GAN) come modello di sintesi delle immagini. La VQ-GAN rappresenta le immagini attraverso un codebook discreto di token visivi, che vengono generati in modo autoregressivo da un Transformer. Il messaggio segreto cifrato determina la selezione di questi token durante la fase di campionamento, esattamente come Meteor fa con i token testuali, senza modificare i pesi pre-addestrati del modello e preservando l'indistinguibilità statistica dell'output generato.
+Il percorso sperimentale parte da VQ-GAN, che abbina un codebook discreto di token visivi a un Transformer autoregressivo (analogia con i modelli linguistici). L'implementazione mostra che encoder e decoder non sono funzioni inverse: circa il 19\% dei token non sopravvive al round-trip attraverso i pixel, impedendo il recupero del messaggio. Il fine-tuning dell'encoder, con decoder e codebook congelati, riduce ma non elimina l'errore, a causa del condizionamento laterale tra posizioni adiacenti. Un esperimento su canale lossless conferma l'equivalenza algoritmica (recupero completo), mostrando che l'ostacolo è nel canale, non nell'algoritmo.
 
-Viene presentata l'architettura completa del sistema, inclusi gli algoritmi dettagliati di encoding e decoding steganografico. Un aspetto critico affrontato è il non-determinismo intrinseco della VQ-GAN: l'encoder e il decoder non costituiscono funzioni inverse esatte, richiedendo un meccanismo di verifica della codifica per garantire la corretta estrazione del messaggio. Il sistema è implementato in Python con PyTorch, utilizzando il checkpoint pre-addestrato S-FLCKR (f=16) per la generazione di paesaggi naturali, e salva le immagini in formato PNG per preservare l'integrità dell'informazione.
+Con Open-MAGVIT2, tokenizer basato sulla \emph{Lookup-Free Quantization} (LFQ), emerge un secondo problema. La LFQ è matematicamente invertibile, ma il canale PNG quantizza i pixel a 8 bit e altera circa il 16.8\% dei token (1.1\% per bit). Poiché ogni token dipende da tutti i precedenti, un singolo errore si propaga a cascata corrompendo le predizioni successive. Il bit error rate end-to-end raggiunge circa il 65\%, aggravato dal disallineamento del flusso binario dovuto al bitrate variabile dell'arithmetic coding.
 
-La tesi analizza le limitazioni teoriche e pratiche del sistema, inclusa la capacità steganografica (circa 140 caratteri ASCII per immagini 256$\times$256 pixel) e i costi computazionali asimmetrici tra encoding e decoding. Vengono inoltre delineati gli esperimenti previsti per la validazione del sistema, utilizzando metriche come la Fréchet Inception Distance (FID) per la qualità visiva e l'analisi della robustezza contro tentativi di rilevamento steganografico. 
+Per aggirare la propagazione si adotta una strategia alternativa: i bit del messaggio sono scritti direttamente nei piani di bit dei codici latenti di un'immagine esistente (Quantization Index Modulation, QIM), eliminando la dipendenza dal campionamento sequenziale. Con codici Reed-Solomon il recupero è completo, con capacità di 30--50 byte per immagini $256\times 256$ pixel. Questa soluzione è però un watermark robusto ma statisticamente rilevabile, non steganografia indistinguibile: la modulazione dei codici introduce perturbazioni rilevabili, specie alterando più della metà dei 18 piani di bit.
+
+Il risultato centrale è un trade-off tra indistinguibilità statistica (campionamento autoregressivo) e robustezza al canale (modulazione diretta dei codici): le due proprietà sono mutuamente esclusive per questo tipo di sistemi. La trasposizione di SwE al dominio visivo è concettualmente possibile, come mostra l'esperimento su canale lossless, ma è vincolata dall'assenza di un canale privo di rumore tra token e pixel. Proprietà di cui il dominio testuale gode intrinsecamente e su cui si fonda il successo di Meteor.
 \end{document}
