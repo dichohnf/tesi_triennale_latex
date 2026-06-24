@@ -49,6 +49,25 @@ Nel corso della trattazione verranno utilizzati i seguenti concetti quantitativi
 	\item \textbf{Per-bit flip rate}: probabilità che un singolo bit (o dimensione latente) venga alterato durante il passaggio attraverso un canale rumoroso.
 \end{itemize}
 
+\subsection{Steganografia e watermarking: una distinzione formale}\label{sec:stego-vs-watermark}
+
+Sebbene steganografia e watermarking condividano la tecnica di incorporare informazione all'interno di un oggetto multimediale, le due discipline si distinguono per l'obiettivo di sicurezza e per il modello di avversario, con conseguenze dirette sui requisiti progettuali e sulle metriche di valutazione.
+
+Nella \textbf{steganografia}, l'obiettivo primario è l'\emph{indistinguibilità}: lo stego-object deve essere statisticamente indistinguibile dai cover-object naturali, poiché l'avversario (lo steganalista) tenta di rilevare la presenza stessa del messaggio nascosto. La metrica di sicurezza fondamentale è la divergenza tra la distribuzione degli stego-object e quella dei cover-object: minore è questa divergenza, maggiore è la sicurezza. La capacità di payload è un obiettivo secondario, subordinato al mantenimento dell'indistinguibilità.
+
+Nel \textbf{watermarking}, l'obiettivo primario è la \emph{robustezza}: il segnale incorporato (il watermark) deve sopravvivere a trasformazioni ostili deliberate (compressione, ridimensionamento, ritaglio, filtraggio) che un attaccante potrebbe applicare per rimuoverlo. L'avversario non cerca di rilevare la presenza del watermark, che è tipicamente nota o irrilevante, ma di distruggerlo senza degradare eccessivamente l'oggetto. La metrica fondamentale è il \emph{bit error rate} (BER) del watermark recuperato dopo le trasformazioni avversarie. L'impercettibilità è un vincolo, non l'obiettivo: il watermark deve essere invisibile all'osservatore umano, ma può lasciare tracce statistiche rilevabili.
+
+La distinzione può essere formalizzata come segue. Sia $\mathbf{x}$ il cover-object, $M$ il messaggio da incorporare e $\mathbf{y}$ lo stego-object (o oggetto watermarked). In steganografia, il requisito è:
+\[
+D\bigl(P(\mathbf{y} \mid M),\, P(\mathbf{x})\bigr) < \varepsilon,
+\]
+dove $D$ è una misura di divergenza statistica (ad esempio la divergenza di Kullback-Leibler) e $\varepsilon$ è sufficientemente piccolo da rendere la rilevazione computazionalmente non praticabile. Nel watermarking, il requisito è:
+\[
+\forall\, T \in \mathcal{T},\quad \mathrm{BER}\bigl(M, \mathrm{Extract}(T(\mathbf{y}))\bigr) < \delta,
+\]
+dove $\mathcal{T}$ è l'insieme delle trasformazioni avversarie considerate, $\mathrm{Extract}$ è la funzione di estrazione del watermark, e $\delta$ è la soglia di errore tollerabile.
+
+Questa distinzione è centrale per comprendere i risultati della sperimentazione descritta nel \autoref{ch:sperimentazione}: le strategie basate sul campionamento autoregressivo del Transformer (Meteor-like) realizzano una steganografia statisticamente indistinguibile ma fragile al rumore del canale, mentre le strategie basate sulla modulazione diretta dei codici LFQ (QIM) realizzano un watermarking robusto ma statisticamente rilevabile. La tensione tra questi due obiettivi, indistinguibilità e robustezza, emerge come il trade-off fondamentale del dominio.
 
 \section{Il modello Meteor}
 
@@ -161,30 +180,11 @@ Un aspetto architetturale importante è lo \textbf{ShiftPermuter}, un modulo che
 
 La LFQ è intrinsecamente invertibile: poiché il codice è determinato unicamente dal segno di ciascuna dimensione latente, e la decodifica è una semplice mappa dal codice binario allo spazio immagine, non esiste ambiguità nel processo di quantizzazione. Questo rappresenta un vantaggio fondamentale rispetto alla VQ-GAN, dove la quantizzazione tramite codebook introduce una perdita informativa.
 
-\subsubsection{Il canale di trasmissione e l'errore di ricodifica}
-
-Nella sperimentazione descritta in questa tesi, il ``canale'' di trasmissione considerato è il seguente: una griglia di token viene convertita in un'immagine PNG a 8 bit (formato lossless, ma quantizzato a \texttt{uint8}), trasmessa, ricaricata e riconvertita in token. La domanda cruciale è quanto fedelmente i token sopravvivano a questo round-trip.
-
-Le misurazioni empiriche sul modello reale mostrano:
-
-\begin{itemize}
-	\item \textbf{Token flip rate} $\approx 16.8\%$: circa un token su sei viene alterato.
-	\item \textbf{Per-bit flip rate} $\approx 1.1\%$: la probabilità che un singolo bit di una dimensione latente venga alterato nel passaggio attraverso il canale è circa l'1\%.
-\end{itemize}
-
-La relazione tra i due valori segue la formula $1 \mhyphen (1 \mhyphen 0.011)^{18} \approx 0.18$: un token subisce un flip se \emph{almeno uno} dei suoi 18 bit viene alterato. Questo divario (1\% a livello di bit, 18\% a livello di token) è fondamentale per comprendere le strategie di embedding descritte nel \autoref{ch:sperimentazione}: uno schema che tratta il token come simbolo atomico vede un canale con il 18\% di rumore; uno schema che opera a livello di bit vede un canale con solo l'1\% di rumore.
-
-\section{Terminologia tecnica comune}
+\section{Glossario}\label{sec:glossario}
 
 Nel corso della trattazione vengono impiegati i seguenti termini tecnici:
 
 \begin{itemize}
-	\item \textbf{Autoregressività}: proprietà per cui la generazione di ciascun elemento di una sequenza dipende esclusivamente dagli elementi precedenti. Formalmente, $P(x_1, \dots, x_n) = \prod_{t=1}^n P(x_t \mid x_{<t})$.
-	
-	\item \textbf{Quantizzazione}: processo di discretizzazione di uno spazio di rappresentazione continuo in un insieme finito di valori atomici.
-	
-	\item \textbf{Entropia}: misura dell'incertezza associata alla distribuzione di probabilità dei token generati da un modello. Maggiore è l'entropia, maggiore è la capacità di codificare informazione senza compromettere la naturalezza statistica.
-	
 	\item \textbf{Logits}: valori numerici prodotti dall'ultimo strato di un modello generativo prima dell'applicazione della funzione softmax per ottenere la distribuzione di probabilità.
 	
 	\item \textbf{Fine tuning}: addestramento supplementare di un modello pre-addestrato su un dataset o un obiettivo specifico, con tasso di apprendimento ridotto per preservare le conoscenze acquisite.

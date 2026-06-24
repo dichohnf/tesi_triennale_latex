@@ -24,7 +24,43 @@ Il sistema implementato segue il seguente flusso operativo:
 	\item \textbf{Estrazione del messaggio}: il destinatario, in possesso dello stesso modello, ripercorre la sequenza di token, ricostruisce le distribuzioni di probabilità e recupera i bit del messaggio originale.
 \end{enumerate}
 
-\subsection{La non-invertibilità della VQ-GAN}
+\subsection{Formalizzazione algoritmica}\label{sec:algoritmi}
+
+La presente sezione formalizza, tramite pseudocodice e notazione matematica, gli algoritmi discussi nel flusso operativo sopra descritto. Il simbolo $|$ indica la concatenazione di stringhe e $\lfloor\cdot\rceil$ l'arrotondamento all'intero più vicino.
+
+\subsubsection{Selezione steganografica del token}
+
+L'\autoref{alg:selezione-token} implementa il meccanismo di \emph{arithmetic coding} che costituisce il cuore della codifica: dato il contesto corrente, il Transformer produce una distribuzione di probabilità sui $K$ codici del codebook; i token con probabilità inferiore a $1/K$ vengono scartati, le probabilità residue vengono rinormalizzate e quantizzate a $D$ bit di precisione, e il messaggio in ingresso determina quale token selezionare. Il numero di bit consumati è pari alla lunghezza del prefisso binario comune tra gli estremi dell'intervallo cumulativo associato al token scelto.
+
+\begin{algorithm}[tbhp]
+\caption{Selezione steganografica del token visivo}
+\label{alg:selezione-token}
+\begin{algorithmic}[1]
+\Require Contesto $\mathbf{c}$, buffer di messaggio $\mathbf{b} \in \{0,1\}^*$, dimensione codebook $K$, precisione $D$, soglia $T$
+\Ensure Indice selezionato $i^*$, prefisso binario $\mathbf{b}_{\text{out}}$
+\State $\mathbf{p} \leftarrow \operatorname{Softmax}\bigl(\operatorname{Transformer}(\mathbf{c})\bigr)$
+\State $\mathcal{I} \leftarrow \{\,i \mid p_i \ge 1/K\,\}$ \Comment{soppressione delle code a bassa probabilità}
+\State $\mathcal{I} \leftarrow \mathcal{I}[0:\min(|\mathcal{I}|,\, T)]$ \Comment{troncamento al top-$T$}
+\ForAll{$i \in \mathcal{I}$}
+\State $\hat{p}_i \leftarrow \bigl\lfloor (p_i \,/ \sum_{j \in \mathcal{I}} p_j) \cdot 2^D \bigr\rceil$ \Comment{quantizzazione a $D$ bit}
+\EndFor
+\State $C_0 \leftarrow 0$
+\For{$k = 1$ \textbf{to} $|\mathcal{I}|$}
+\State $C_k \leftarrow C_{k-1} + \hat{p}_{\mathcal{I}[k-1]}$ \Comment{cumulativa discreta}
+\EndFor
+\State $m \leftarrow \operatorname{BinToInt}\bigl(\mathbf{b}[0:D-1]\bigr)$ \Comment{interpreta i primi $D$ bit come intero}
+\State $i^* \leftarrow \mathcal{I}\bigl[\min\{\,k \mid C_k > m\,\}\bigr]$
+\State $L \leftarrow C_{i^*-1}$,\; $R \leftarrow C_{i^*}$
+\State $\mathbf{b}_{\text{out}} \leftarrow \operatorname{CommonPrefix}\bigl(\operatorname{IntToBin}(L, D),\; \operatorname{IntToBin}(R-1, D)\bigr)$
+\State \Return $(i^*,\; \mathbf{b}_{\text{out}})$
+\end{algorithmic}
+\end{algorithm}
+
+A valle della selezione del token, il sistema procede posizione per posizione lungo la griglia: per ciascuna posizione viene costruito il contesto locale a partire dalla griglia di riferimento $\mathbf{R}$ e dalla griglia in costruzione $\mathbf{B}$, si invoca la procedura di selezione steganografica, e si assegna il token scelto alla griglia. L'operazione si ripete per tutte le posizioni residue; esaurito il messaggio, le posizioni rimanenti vengono completate con campionamento non vincolato dalla distribuzione del Transformer, così da preservare la coerenza visiva della regione generata.
+
+La decodifica opera in modo simmetrico: il destinatario ricostruisce il medesimo contesto iniziale, codifica l'immagine stego ricevuta nella griglia di indici tramite l'encoder VQ-GAN, e percorre le posizioni residue ricostruendo la distribuzione troncata e quantizzata a partire dal contesto corrente; individua quindi la posizione del token ricevuto nell'insieme selezionato e recupera il prefisso binario comune degli estremi dell'intervallo cumulativo corrispondente, concatenando progressivamente i bit estratti fino a ricostruire l'intero messaggio.
+
+\subsection{La non-invertibilità della VQ-GAN}\label{sec:non-invertibilita}
 
 Durante i test preliminari è emersa una criticità fondamentale: l'encoder e il decoder della VQ-GAN non costituiscono funzioni inverse esatte. Formalmente:
 \[
@@ -104,7 +140,18 @@ A questo si aggiunge un secondo effetto: l'arithmetic coding a bitrate variabile
 
 \subsection{Misurazione dell'errore}
 
-Abbiamo misurato l'errore end-to-end del sistema con Open-MAGVIT2 sul canale PNG. I risultati sono stati:
+Il canale di trasmissione considerato nella sperimentazione è il seguente: una griglia di token viene convertita in un'immagine PNG a 8 bit (formato lossless, ma quantizzato a \texttt{uint8}), trasmessa, ricaricata e riconvertita in token. La domanda cruciale è quanto fedelmente i token sopravvivano a questo round-trip.
+
+Le misurazioni empiriche sul modello reale hanno caratterizzato il rumore del canale:
+
+\begin{itemize}
+	\item \textbf{Token flip rate} $\approx 16.8\%$: circa un token su sei viene alterato.
+	\item \textbf{Per-bit flip rate} $\approx 1.1\%$: la probabilità che un singolo bit di una dimensione latente venga alterato nel passaggio attraverso il canale è circa l'1\%.
+\end{itemize}
+
+La relazione tra i due valori segue la formula $1 \mhyphen (1 \mhyphen 0.011)^{18} \approx 0.18$: un token subisce un flip se \emph{almeno uno} dei suoi 18 bit viene alterato. Questo divario (1\% a livello di bit, 18\% a livello di token) è fondamentale per comprendere le strategie di embedding descritte in seguito: uno schema che tratta il token come simbolo atomico vede un canale con il 18\% di rumore; uno schema che opera a livello di bit vede un canale con solo l'1\% di rumore.
+
+Su questo canale, abbiamo misurato l'errore end-to-end del sistema con Open-MAGVIT2. I risultati sono stati:
 
 \begin{itemize}
 	\item \emph{Bit error rate} (\textbf{BER}) $\approx 65\%$ nella configurazione base di arithmetic coding.
