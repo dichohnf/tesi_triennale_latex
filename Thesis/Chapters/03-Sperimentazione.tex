@@ -2,7 +2,7 @@
 
 \chapter{Percorso sperimentale}\label{ch:sperimentazione}
 
-Questo capitolo descrive il percorso di sperimentazione condotto per verificare l'applicabilità del paradigma steganografico \emph{Meteor} al dominio visivo. L'esposizione segue l'ordine cronologico degli esperimenti, evidenziando le problematiche emerse e le strategie adottate per affrontarle. Il capitolo si conclude con un'analisi critica dei risultati, che identifica nella propagazione dell'errore dovuta all'autoregressività dei modelli utilizzati il fattore limitante principale per la realizzazione di uno SwE visivo basato su tokenizzatori convoluzionali.
+Questo capitolo descrive il percorso di sperimentazione condotto per verificare l'applicabilità del paradigma steganografico \emph{Meteor} al dominio visivo. L'esposizione segue l'ordine cronologico degli esperimenti, evidenziando le problematiche emerse e le strategie adottate per affrontarle. Il capitolo si conclude con un'analisi critica dei risultati, che identifica nella propagazione dell'errore dovuta all'autoregressività dei modelli utilizzati il fattore limitante principale per la realizzazione di uno SwE visivo basato su tokenizer convoluzionali.
 
 \section{Primo approccio: estensione di Meteor con VQ-GAN}
 
@@ -16,11 +16,11 @@ Il sistema implementato segue il seguente flusso operativo:
 
 \begin{enumerate}
 	\item \textbf{Preparazione del contesto}: viene selezionata un'immagine dal dataset di riferimento (il modello S-FLCKR, addestrato su \emph{outdoor landscapes} di \emph{Taming Transformers} \cite{esser-2020}). L'immagine viene processata dall'encoder VQ-GAN per ottenere una sequenza di indici discreti del codebook.
-	
+
 	\item \textbf{Generazione autoregressiva vincolata}: per ciascuna posizione della griglia, il Transformer produce una distribuzione di probabilità su tutti i $K$ codici del codebook. Il messaggio segreto determina la selezione del token tramite arithmetic coding (\autoref{sec:meteor-arithmetic}), analogamente a quanto avviene in Meteor.
-	
+
 	\item \textbf{Ricostruzione dell'immagine}: la sequenza completa di indici viene decodificata dal decoder VQ-GAN per produrre l'immagine finale (\emph{stego-image}).
-	
+
 	\item \textbf{Estrazione del messaggio}: il destinatario, in possesso dello stesso modello, ripercorre la sequenza di token, ricostruisce le distribuzioni di probabilità e recupera i bit del messaggio originale.
 \end{enumerate}
 
@@ -28,7 +28,7 @@ Il sistema implementato segue il seguente flusso operativo:
 
 Durante i test preliminari è emersa una criticità fondamentale: l'encoder e il decoder della VQ-GAN non costituiscono funzioni inverse esatte. Formalmente:
 \[
-\mathrm{Decoder}_{VQ}(\mathrm{Encoder}_{VQ}(\mathbf{x})) \ne \mathbf{x}, \qquad \text{per molti} \quad \mathbf{x} \in \mathbb{R}^{H \times W \times C}.
+	\mathrm{Decoder}_{VQ}(\mathrm{Encoder}_{VQ}(\mathbf{x})) \ne \mathbf{x}, \qquad \text{per molti} \quad \mathbf{x} \in \mathbb{R}^{H \times W \times C}.
 \]
 
 
@@ -36,70 +36,43 @@ Circa il 42\% dei token generati dal Transformer, decodificati tramite il decode
 
 Il problema è strutturale: la quantizzazione vettoriale, la loss avversaria e la loss percettiva addestrano l'autoencoder a produrre ricostruzioni visivamente fedeli, non a garantire l'invertibilità del codice. La mappa dallo spazio immagine allo spazio dei codici discreti non è iniettiva, e codici diversi possono produrre pixel simili (e viceversa).
 
-Per mitigare il problema, è stato implementato un \textbf{meccanismo di verifica e ripetizione} (\autoref{alg:verifica}): dopo aver selezionato un token $i^*$ guidato dal messaggio, il sistema decodifica l'immagine parziale, la ricodifica, e verifica che il token nella posizione $(r, c)$ corrisponda a $i^*$. In caso di discordanza, la selezione viene ripetuta fino a un massimo di 100 tentativi.
-
-\begin{algorithm}[tbhp]
-\caption{Codifica vincolata con verifica di invertibilità}
-\label{alg:verifica}
-\begin{algorithmic}[1]
-\Require Matrice di riferimento $\mathbf{R}$, matrice in costruzione $\mathbf{B}$, posizione $(r,c)$, bitstream $\mathbf{b}$, flag casuale $q$
-\Ensure Posizione successiva $(r', c')$, indice $i^*$, bit codificati $n$, bitstream aggiornato $\mathbf{b}'$
-\State $\mathbf{c} \gets \mathrm{costruisci\_contesto}(\mathbf{R}, \mathbf{B}, r, c)$
-\Repeat
-\State $(i^*, n) \gets \mathrm{seleziona\_token\_arithmetic}(\mathbf{c}, \mathbf{b})$
-\State $\mathbf{B}[r, c] \gets i^*$
-\State $\mathbf{x}_{\mathrm{parz}} \gets \mathrm{Decoder}_{VQ}(\mathbf{B})$
-\State $\hat{\imath} \gets \bigl[\mathrm{Encoder}_{VQ}(\mathbf{x}_{\mathrm{parz}})\bigr]_{r,c}$
-\Until{$q = \mathrm{vero}$ \textbf{or} $\hat{\imath} = i^*$ \textbf{or} $\mathrm{tentativi} > 100$}
-\State \Return $\mathrm{pos\_successiva}(r, c),\; i^*,\; n,\; \mathbf{b}'$
-\end{algorithmic}
-\end{algorithm}
+Abbiamo quindi indagato la possibilità di introdurre un meccanismo di verifica che, dopo aver selezionato un token $i^*$ in una posizione $(r,c)$, decodificasse l'intera griglia di indici fino a quel momento costruita, la ricodificasse con l'encoder, e verificasse che il token nella posizione $(r,c)$ corrispondesse effettivamente a $i^*$. L'idea era iterare la selezione fino a trovare un token che sopravvivesse al round-trip encoding--decoding--encoding. Tuttavia, questa strategia si è rivelata impraticabile per una ragione architetturale di fondo: il decoder VQ-GAN è composto da strati convoluzionali che operano sull'intera griglia spaziale, e la decodifica di una griglia parzialmente popolata, in cui molte posizioni contengono ancora un valore di default o non sono ancora state generate, produce un'immagine che non corrisponde a una porzione dell'immagine finale. In altri termini, la decodifica parziale non è equivalente alla decodifica completa ristretta a una sotto-regione: i filtri convoluzionali mescolano informazione attraverso i confini delle posizioni già fissate e di quelle ancora indefinite, invalidando la verifica locale. Il meccanismo è stato pertanto accantonato.
 
 \subsection{Risultati e limitazioni}
 
-Il meccanismo di verifica ha mostrato risultati parziali: in molti casi la verifica falliva sistematicamente, costringendo il sistema a selezioni forzate dopo il numero massimo di tentativi, con conseguente perdita di bit del messaggio. Inoltre, il meccanismo di decodifica VQ-GAN non è attuabile per singole patch o per immagini parziali, ma solo a livello di immagine completa, rendendo il processo computazionalmente oneroso.
+L'impossibilità di verificare la sopravvivenza dei token durante la generazione ha reso l'approccio diretto autoregressivo (AR) con VQ-GAN di fatto inutilizzabile: senza un riscontro locale sulla coerenza tra il token selezionato e quello che il destinatario osserverà dopo il round-trip attraverso il canale pixel, la decodifica steganografica produce un flusso di bit corrotto già dopo i primi token. Il $\sim\!42\%$ di token che non sopravvivono al ciclo encoding--decoding--encoding si traduce in un tasso d'errore sul messaggio recuperato che rende impossibile qualsiasi comunicazione affidabile anche utilizzando algoritmi di correzione d'errore sui bit del messaggio. In altre parole, il canale visivo così costruito non è \emph{lossless} e non può supportare la trasmissione di informazione segreta in modo affidabile.
 
-La causa profonda è la non-invertibilità intrinseca dell'architettura: l'encoder e il decoder sono funzioni statistiche apprese separatamente, non coppie di trasformazioni inverse progettate per essere biettive. La quantizzazione vettoriale introduce un'ulteriore perdita: due vettori latenti simili possono essere quantizzati allo stesso indice, ma la mappa inversa non è garantita.
+La causa profonda è la non-invertibilità intrinseca dell'architettura: l'encoder e il decoder sono funzioni statistiche apprese separatamente, non coppie di trasformazioni inverse progettate per essere biettive. La quantizzazione vettoriale introduce un'ulteriore perdita: due vettori latenti simili possono essere quantizzati allo stesso indice, ma la mappa inversa non è garantita. A differenza di un LLM, dove il token generato è esattamente il token che il destinatario legge (il canale testuale è \emph{lossless}), nella VQ-GAN il token scelto dal Transformer attraversa un canale rumoroso (il passaggio attraverso pixel continui e la riquantizzazione dell'encoder), ovvero soggetto ad errori sistematici, che ne altera l'identità in quasi metà dei casi.
 
 \section{Tentativo di fine tuning dell'encoder VQ-GAN}
 
 \subsection{Obiettivo}
 
-Per superare la limitazione della non-invertibilità, abbiamo esplorato la possibilità di \textbf{addestrare l'encoder VQ-GAN a produrre codici invertibili} rispetto al decoder fisso, tramite un fine tuning mirato.
+Per superare la limitazione della non-invertibilità, abbiamo esplorato la possibilità di addestrare l'encoder VQ-GAN a produrre codici invertibili rispetto al decoder fisso, tramite un fine tuning mirato.
 
 \subsection{Strategia di fine tuning}
 
-L'approccio seguito è stato quello di congelare i pesi del decoder e del codebook della VQ-GAN, addestrando solo l'encoder con una funzione di loss modificata. L'obiettivo era minimizzare l'errore di ricostruzione del codice:
+L'approccio è stato quello di congelare i pesi del decoder e del codebook della VQ-GAN, componenti che contribuiscono direttamente alla generazione delle immagini e la cui modifica avrebbe alterato l'inferenza, e addestrare soltanto l'encoder con una funzione di loss modificata. L'obiettivo era minimizzare l'errore di ricostruzione del codice:
 \[
-\mathcal{L}_{\mathrm{inv}} = \bigl\| \mathbf{S} - \mathrm{Encoder}_{VQ}\bigl(\mathrm{Decoder}_{VQ}(\mathbf{S})\bigr) \bigr\|_2^2,
+	\mathcal{L}_{\mathrm{inv}} = \bigl\| \mathbf{S} - \mathrm{Encoder}_{VQ}\bigl(\mathrm{Decoder}_{VQ}(\mathbf{S})\bigr) \bigr\|_2^2,
 \]
-dove $\mathbf{S}$ è la griglia di indici discreti originali e $\mathrm{Encoder}_{VQ}(\mathrm{Decoder}_{VQ}(\mathbf{S}))$ è la griglia ottenuta ricodificando l'immagine decodificata. Minimizzando questa loss, l'encoder viene incoraggiato a produrre rappresentazioni latenti che, dopo decodifica e ricodifica, preservino gli indici originali.
+dove $\mathbf{S}$ è la griglia di indici discreti originali e $\mathrm{Encoder}_{VQ}(\mathrm{Decoder}_{VQ}(\mathbf{S}))$ è la griglia ottenuta ricodificando l'immagine decodificata. Minimizzando questa loss l'encoder è incoraggiato a produrre rappresentazioni latenti che, dopo decodifica e ricodifica, preservino gli indici originali.
 
 \subsection{Risultati}
 
-Il fine tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzione dei codici si è ridotto significativamente, con un aumento della percentuale di token invariati dopo il round-trip encoding $\to$ decoding $\to$ encoding. Tuttavia, anche dopo l'addestramento, una frazione non trascurabile di token continuava a subire fluttuazioni.
+Il fine-tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzione dei codici si è ridotto significativamente, con un aumento della percentuale di token invariati dopo il round-trip encoding-decoding-encoding fino al 99.82\%. Tuttavia, anche dopo l'addestramento, una frazione non trascurabile di token continuava a subire fluttuazioni. Operando questa analisi abbiamo notato che in realtà il \emph{flip-rate} precedente non risultava pari al 42\% come stimato inizialmente, ma era più basso, circa il 24\%. Questo perché la VQ-GAN non è un canale binario indipendente per ciascun token: la dipendenza tra i token e la propagazione dell'errore attraverso il decoder convoluzionale produce un effetto ``a cascata'' che amplifica gli errori locali. Oltre a ciò rimane il problema della compressione in PNG a 8-bit per colore la quale introduce una variazione dei pixel dovuta alla compressione e alla quantizzazione che altera la ricodifica dei token.
 
-L'analisi ha mostrato che il condizionamento intrinseco della VQ-GAN -- la dipendenza di ciascuna posizione $(r, c)$ dall'intera griglia di token circostanti -- impedisce una convergenza a zero dell'errore. Modificare un singolo token nella griglia altera la ricostruzione dell'intera immagine, che a sua volta altera la codifica di tutte le altre posizioni. Questo effetto di ``propagazione laterale'' rende il problema intrattabile per un semplice fine tuning dell'encoder.
+L'analisi ha mostrato che il condizionamento intrinseco della VQ-GAN, ovvero la dipendenza di ciascuna posizione $(r, c)$ dall'intera griglia di token circostanti, impedisce una convergenza a zero dell'errore. Modificare un singolo token nella griglia altera la ricostruzione dell'intera immagine, che a sua volta altera la codifica di tutte le altre posizioni. Questo effetto di ``propagazione laterale'' rende il problema intrattabile attraverso un fine-tuning dell'encoder.
 
 \section{Equivalenza del Transformer: Meteor è applicabile ai token visivi}
 
 \subsection{La verifica concettuale}
 
-Pur con le limitazioni legate alla non-invertibilità, abbiamo voluto verificare se, \textbf{a livello di Transformer}, l'algoritmo di campionamento di Meteor fosse equivalente anche per i token visivi. La domanda era: se il problema dell'invertibilità fosse risolto, l'approccio di Meteor funzionerebbe concettualmente per le immagini?
-
-Per verificarlo, abbiamo analizzato il processo di generazione del Transformer visivo isolandolo dal tokenizer. Il ragionamento è il seguente:
-
-\begin{itemize}
-	\item In Meteor, un LLM produce una distribuzione $P(w_t \mid w_{<t})$ sul vocabolario testuale, e l'arithmetic coding seleziona il token $w_t$ in base ai bit del messaggio.
-	\item Nel Transformer della VQ-GAN, il modello produce una distribuzione $P(s_t \mid s_{<t})$ sul codebook, e l'arithmetic coding seleziona l'indice $s_t$ in base ai bit del messaggio.
-	\item Le due operazioni sono \textbf{formalmente identiche}: in entrambi i casi si tratta di selezionare un elemento da un insieme finito in base a una distribuzione di probabilità, guidati da una sequenza binaria.
-\end{itemize}
-
-La conclusione è che l'algoritmo di Meteor è direttamente applicabile ai token visivi \textbf{se} il tokenizer garantisce l'invertibilità del codice. Il problema non è nell'algoritmo di campionamento, ma nella fedeltà del canale encoding/decoding.
+Pur con le limitazioni legate alla non-invertibilità, abbiamo voluto verificare se, a livello di Transformer, l'algoritmo di campionamento di Meteor fosse applicabile anche ai token visivi. Per rispondere, abbiamo isolato il Transformer dal tokenizer e confrontato i due processi di generazione. In Meteor, un LLM produce a ogni passo una distribuzione $P(w_t \mid w_{<t})$ sul vocabolario testuale; l'arithmetic coding consuma una porzione del messaggio segreto e seleziona il token $w_t$ il cui intervallo cumulativo contiene i bit letti. Nel Transformer della VQ-GAN, il modello produce una distribuzione $P(s_t \mid s_{<t})$ sul codebook e l'arithmetic coding seleziona l'indice $s_t$ con lo stesso identico criterio. Le due operazioni sono formalmente equivalenti: in entrambi i casi si seleziona un elemento da un insieme finito secondo una distribuzione di probabilità, guidati da una sequenza binaria. La conclusione è che l'algoritmo di Meteor è direttamente trasponibile ai token visivi; il vero ostacolo non risiede nel meccanismo di campionamento, ma nella fedeltà del canale encoding--decoding, cioè nella capacità del tokenizer di restituire, dopo il round-trip attraverso i pixel, gli stessi indici su cui il Transformer è stato condizionato.
 
 \subsection{Implicazione per la scelta dell'architettura}
 
-Questa verifica ha orientato la ricerca verso un tokenizer visivo che offrisse garanzie di invertibilità. L'architettura candidata naturale è stata \textbf{Open-MAGVIT2} \cite{luo-2024}, che utilizza la \emph{Lookup-Free Quantization} (LFQ), una tecnica di quantizzazione intrinsecamente invertibile (\autoref{sec:lfq}).
+Questa verifica ha orientato la ricerca verso un tokenizer visivo che offrisse garanzie di invertibilità. L'architettura candidata è stata \textbf{Open-MAGVIT2} \cite{luo-2024}, che utilizza la \emph{Lookup-Free Quantization} (\textbf{LFQ}), una tecnica di quantizzazione intrinsecamente invertibile (\autoref{sec:lfq}).
 
 \section{Sperimentazione con Open-MAGVIT2}
 
@@ -108,14 +81,14 @@ Questa verifica ha orientato la ricerca verso un tokenizer visivo che offrisse g
 Open-MAGVIT2 presenta tre caratteristiche che lo rendono particolarmente adatto al nostro scopo:
 
 \begin{enumerate}
-	\item \textbf{LFQ invertibile}: la quantizzazione per segno di ciascuna dimensione latente produce un codice binario deterministico e invertibile. Dato un codice $\mathbf{z}_q \in \{-1, +1\}^d$, la decodifica produce un'immagine, e ricodificando tale immagine si ottiene lo stesso codice (a meno del rumore del canale PNG).
+	\item \textbf{LFQ invertibile}: la quantizzazione per segno di ciascuna dimensione latente produce un codice binario deterministico e invertibile. Dato un codice $\mathbf{z}_q \in \{\mhyphen1, 1\}^d$, la decodifica produce un'immagine, e ricodificando tale immagine si ottiene lo stesso codice (a meno del rumore del canale PNG).
 	\item \textbf{Modello autoregressivo}: il \emph{Net2NetTransformer} associato a Open-MAGVIT2 genera token visivi in modo autoregressivo, con una distribuzione di probabilità per ciascuna posizione.
 	\item \textbf{Fattorizzazione asimmetrica}: la suddivisione in pre-token (6 bit) e post-token (12 bit) consente di operare a granularità variabile.
 \end{enumerate}
 
 \subsection{Il problema della propagazione dell'errore}
 
-Nonostante l'invertibilità della LFQ, la sperimentazione con Open-MAGVIT2 ha rivelato un secondo problema fondamentale: la \textbf{propagazione dell'errore} (\emph{error cascade}) nel modello autoregressivo.
+Nonostante l'invertibilità della LFQ, la sperimentazione con Open-MAGVIT2 ha rivelato un secondo problema fondamentale: la \emph{propagazione dell'errore} nel modello autoregressivo.
 
 Il meccanismo è il seguente:
 
@@ -134,8 +107,8 @@ A questo si aggiunge un secondo effetto: l'arithmetic coding a bitrate variabile
 Abbiamo misurato l'errore end-to-end del sistema con Open-MAGVIT2 sul canale PNG. I risultati sono stati:
 
 \begin{itemize}
-	\item \textbf{Bit error rate (BER)} $\approx 65\%$ nella configurazione base di arithmetic coding.
-	\item Il BER mostrava una tendenza a \textbf{crescere} (verso 80--84\%) quando veniva introdotta una simulazione lato mittente per tentare di allineare il contesto, indicando l'assenza di un punto fisso nel ciclo di feedback.
+	\item \emph{Bit error rate} (\textbf{BER}) $\approx 65\%$ nella configurazione base di arithmetic coding.
+	\item Il BER mostrava una tendenza a \emph{crescere} (verso 80--84\%) quando veniva introdotta una simulazione lato mittente per tentare di allineare il contesto, indicando l'assenza di un punto fisso nel ciclo di feedback.
 \end{itemize}
 
 La ragione per cui non esiste punto fisso è la circolarità del problema: per allineare il contesto del mittente con quello del destinatario, il mittente dovrebbe condizionarsi sui token ricodificati $s'$; ma i token scelti dal mittente sono quelli che vengono renderizzati, e renderizzarli produce un $s'$ \emph{diverso}. La circolarità è irriducibile.
@@ -146,18 +119,13 @@ Un tentativo di mitigazione è stato il passaggio da arithmetic coding a \textbf
 
 \subsection{Verifica: embedding nei piani di bit}
 
-Per confermare che il problema fosse effettivamente nella propagazione dell'errore e non nell'architettura di Open-MAGVIT2, abbiamo implementato una strategia di embedding alternativa: invece di guidare il campionamento del Transformer, abbiamo codificato i bit del messaggio \textbf{direttamente nei singoli piani di bit dei codici LFQ} di un'immagine esistente. Questo approccio elimina completamente la dipendenza dal contesto autoregressivo, poiché ciascuna posizione viene decodificata indipendentemente dalle altre.
+Per confermare che il problema fosse effettivamente nella propagazione dell'errore e non nell'architettura di Open-MAGVIT2, abbiamo implementato una strategia di embedding alternativa: invece di guidare il campionamento del Transformer, abbiamo codificato i bit del messaggio \emph{direttamente nei singoli piani di bit dei codici LFQ} di un'immagine esistente. Questo approccio elimina completamente la dipendenza dal contesto autoregressivo, poiché ciascuna posizione viene decodificata indipendentemente dalle altre.
 
 \subsubsection{QIM su codici LFQ}
 
 La tecnica, riconducibile alla \emph{Quantization Index Modulation} (\textbf{QIM}), funziona come segue:
 
-\begin{enumerate}
-	\item Data un'immagine $\mathbf{x}$, la si codifica con l'encoder LFQ per ottenere la griglia di codici $\mathbf{Z} \in \{-1, +1\}^{h \times w \times d}$, dove $d = 18$ è il numero di dimensioni latenti per posizione.
-	\item Si seleziona un sottoinsieme di $p$ piani di bit (dimensioni latenti) tra i $d$ disponibili. Su ciascun piano, si sovrascrive il bit di ciascuna posizione con un bit del messaggio (opportunamente codificato con codici di correzione d'errore).
-	\item Si decodifica la griglia modificata per ottenere l'immagine stego.
-	\item Il destinatario ricodifica l'immagine, legge i piani di bit selezionati e recupera il messaggio.
-\end{enumerate}
+Data un'immagine $\mathbf{x}$, la si codifica con l'encoder LFQ per ottenere la griglia di codici $\mathbf{Z} \in \{\mhyphen1, 1\}^{h \times w \times d}$, dove $d = 18$ è il numero di dimensioni latenti per posizione. Si seleziona quindi un sottoinsieme di $p$ piani di bit (dimensioni latenti) tra i $d$ disponibili; su ciascun piano si sovrascrive il bit di ciascuna posizione con un bit del messaggio, opportunamente codificato con codici di correzione d'errore. Si decodifica poi la griglia modificata per ottenere l'immagine stego. Il destinatario, ricodificando l'immagine, legge i piani di bit selezionati e recupera il messaggio.
 
 Poiché la decodifica di ciascuna posizione non dipende dalle altre, non esiste alcuna cascata: un errore in una posizione rimane confinato a quella posizione. Il canale che il sistema vede è il \textbf{per-bit flip rate} ($\approx 1.1\%$), non il \textbf{token flip rate} ($\approx 16.8\%$).
 
@@ -168,47 +136,48 @@ L'esperimento ha prodotto risultati positivi:
 \begin{itemize}
 	\item Con l'impiego di codici di correzione d'errore (Reed-Solomon su GF(256) e ripetizione binaria), è stato possibile recuperare il messaggio con \textbf{100\% di affidabilità} anche dopo il passaggio attraverso il canale PNG.
 	\item La capacità utile si attestava nell'ordine di \textbf{30--50 byte per immagine 256$\times$256} con strength 9 (9 piani di bit su 18 utilizzati).
-	\item Con l'utilizzo di immagini reali come carrier (invece di campioni generati dall'AR), la capacità scala linearmente con la risoluzione: un'immagine 512$\times$512 ha 4 volte i token di una 256$\times$256, offrendo 4 volte la capacità a parità di strength.
+	\item Con l'utilizzo di immagini reali come carrier (invece di campioni generati dal modello autoregressivo (AR)), la capacità scala linearmente con la risoluzione: un'immagine 512$\times$512 ha 4 volte i token di una 256$\times$256, offrendo 4 volte la capacità a parità di strength.
 \end{itemize}
 
 \subsection{Tensione fondamentale: robustezza vs impercettibilità}
 
 L'esperimento di embedding nei piani di bit ha anche messo in luce una tensione fondamentale, che rappresenta il limite intrinseco di questo approccio.
 
-Un bit di una dimensione latente è \textbf{robusto} (sopravvive al canale PNG) quando la dimensione corrispondente ha \textbf{magnitudo elevata} -- lontana dallo zero, dove il rumore del canale difficilmente ne inverte il segno. Tuttavia, forzare il segno di una dimensione a magnitudo elevata produce una \textbf{grande perturbazione nell'immagine}. Al contrario, le dimensioni a magnitudo ridotta possono essere modificate con minor impatto visivo, ma sono più fragili al rumore del canale.
+Un bit di una dimensione latente è \emph{robusto} (sopravvive al canale PNG) quando la dimensione corrispondente ha \emph{magnitudo elevata}, ovvero lontana dallo zero, dove il rumore del canale difficilmente ne inverte il segno. Tuttavia, forzare il segno di una dimensione a magnitudo elevata produce una \emph{grande perturbazione nell'immagine}. Al contrario, le dimensioni a magnitudo ridotta possono essere modificate con minor impatto visivo, ma sono più fragili al rumore del canale.
 
-Le misurazioni sui vari piani di bit mostrano una variabilità significativa: i piani più robusti hanno un flip rate del $\sim 2\%$, quelli più fragili arrivano all'$\sim 11\%$. Inoltre, sovrascrivere più di circa metà dei 18 piani di bit (strength $> 9$) spinge l'immagine fuori dal manifold naturale del tokenizer, degradando tutti i piani e facendo saltare il flip rate effettivo dal $\sim 4\%$ al $11-18\%$.
+Le misurazioni sui vari piani di bit mostrano una variabilità significativa: i piani più robusti hanno un flip rate del $\sim 2\%$, quelli più fragili arrivano a $\sim 11\%$. Inoltre, sovrascrivere più di circa metà dei 18 piani di bit (strength $> 9$) spinge l'immagine fuori dal manifold naturale del tokenizer, degradando tutti i piani e facendo saltare il flip rate effettivo dal $\sim 4\%$ al $11-18\%$.
 
-Questa tensione è la manifestazione, in una nuova forma, dello stesso problema incontrato con Meteor/AR: \textbf{l'indistinguibilità statistica e la robustezza a un canale rumoroso sono mutuamente esclusive} per questo tipo di sistemi. Lo schema basato sulla scelta del token (AR) acquista indistinguibilità e paga con la fragilità; lo schema basato sui piani di bit (QIM) acquista robustezza e paga con la rilevabilità.
+Questa tensione è la manifestazione, in una nuova forma, dello stesso problema incontrato con Meteor/autoregressivo: \emph{l'indistinguibilità statistica e la robustezza a un canale rumoroso sono mutuamente esclusive} per questo tipo di sistemi. Lo schema basato sulla scelta del token (autoregressivo) acquista indistinguibilità e paga con la fragilità; lo schema basato sui piani di bit (QIM) acquista robustezza e paga con la rilevabilità.
 
 \section{Sintesi dei risultati sperimentali}
 
 La tabella seguente riassume i risultati ottenuti nei vari esperimenti:
 
 \begin{table}[htbp]
-\centering
-\caption{Sintesi dei risultati sperimentali}
-\label{tab:risultati}
-\begin{tabular}{lccc}
-\toprule
-\textbf{Configurazione} & \textbf{Canale} & \textbf{BER} & \textbf{Recupero} \\
-\midrule
-VQ-GAN + Meteor (AR) & Pixel PNG & Alto & Parziale \\
-VQ-GAN + fine tuning encoder & Pixel PNG & Ridotto ma $>0$ & Parziale \\
-OpenMAGVIT2 + Meteor (AR) & Pixel PNG & $\sim 65\%$ & Assente \\
-OpenMAGVIT2 + Meteor (AR) & Token lossless & $0\%$ & Completo ($\sim 1980$ bit/img) \\
-OpenMAGVIT2 + QIM (planes) & Pixel PNG & $< 5\%$ & Completo ($30-50$ byte/img) \\
-\bottomrule
-\end{tabular}
+	\centering
+	\footnotesize
+	\label{tab:risultati}
+	\begin{tabular}{lccc}
+		\toprule
+		\textbf{Configurazione}      & \textbf{Canale} & \textbf{BER} & \textbf{Recupero} \\
+		\midrule
+		VQ-GAN + Meteor              & Pixel PNG       & $\sim 42\%$  & Parziale          \\
+		VQ-GAN + fine tuning encoder & Pixel PNG       & $>0\%$       & Parziale          \\
+		OpenMAGVIT2 + Meteor         & Pixel PNG       & $\sim 65\%$  & Assente           \\
+		OpenMAGVIT2 + Meteor         & Token lossless  & $0\%$        & Completo          \\
+		OpenMAGVIT2 + QIM            & Pixel PNG       & $< 5\%$      & Completo          \\
+		\bottomrule
+	\end{tabular}
+	\caption{Sintesi dei risultati sperimentali}
 \end{table}
 
 I risultati confermano che:
 
 \begin{enumerate}
 	\item L'algoritmo di campionamento di Meteor è concettualmente applicabile ai token visivi, come dimostrato dall'esperimento su canale lossless (recupero esatto del 100\% dei bit).
-	\item La \textbf{non-invertibilità} della VQ-GAN impedisce un'applicazione diretta, e il fine tuning dell'encoder non è sufficiente a risolvere strutturalmente il problema.
-	\item Anche con un tokenizer invertibile (Open-MAGVIT2/LFQ), la \textbf{propagazione dell'errore} nel modello autoregressivo rende il recupero impossibile su un canale pixel rumoroso.
-	\item L'\textbf{embedding diretto nei piani di bit} (QIM) supera il problema della propagazione, ma al costo di essere un watermark rilevabile, non una steganografia indistinguibile.
+	\item La \emph{non-invertibilità} della VQ-GAN impedisce un'applicazione diretta, e il fine tuning dell'encoder non è sufficiente a risolvere strutturalmente il problema.
+	\item Anche con un tokenizer invertibile (Open-MAGVIT2/LFQ), la \emph{propagazione dell'errore} nel modello autoregressivo rende il recupero impossibile su un canale pixel rumoroso.
+	\item L'\emph{embedding diretto nei piani di bit} (QIM) supera il problema della propagazione, ma al costo di essere un watermark rilevabile, non una steganografia indistinguibile, quindi fortemente suscetibile ad algoritmi di steganalisi.
 \end{enumerate}
 
 \section{Limitazioni emerse}
@@ -216,11 +185,11 @@ I risultati confermano che:
 La sperimentazione ha evidenziato le seguenti limitazioni fondamentali:
 
 \begin{itemize}
-	\item \textbf{Indistinguibilità e robustezza sono incompatibili} per questo tipo di sistemi: un metodo che opera sulle scelte del modello (AR) è statisticamente indistinguibile ma fragile; un metodo che opera direttamente sui codici (QIM) è robusto ma rilevabile.
-	
+	\item \textbf{Indistinguibilità e robustezza sono incompatibili} per questo tipo di sistemi: un metodo che opera sulle scelte del modello autoregressivo è statisticamente indistinguibile ma fragile; un metodo che opera direttamente sui codici (QIM) è robusto ma rilevabile.
+
 	\item \textbf{Modesta capacità utile}: anche nello scenario più favorevole (QIM su 9 piani di bit), la capacità è dell'ordine di poche decine di byte per immagine 256$\times$256. Per applicazioni pratiche è necessario scalare la risoluzione del carrier o suddividere il payload su più immagini.
-	
+
 	\item \textbf{Dipendenza dal canale}: tutte le calibrazioni sono state effettuate per il canale PNG/uint8. Canali più ostili (JPEG, resize, crop) richiederebbero una ricalibrazione e produrrebbero capacità inferiori.
-	
-	\item \textbf{Qualità dell'immagine vs strength}: la fedeltà visiva dell'immagine carrier è inversamente proporzionale al numero di piani di bit sovrascritti. Carriere riconoscibili richiedono strength bassa, e quindi capacità ridotta.
+
+	\item \textbf{Qualità dell'immagine vs strength}: la fedeltà visiva dell'immagine carrier è inversamente proporzionale al numero di piani di bit sovrascritti. Carrier riconoscibili richiedono strength bassa, e quindi capacità ridotta.
 \end{itemize}
