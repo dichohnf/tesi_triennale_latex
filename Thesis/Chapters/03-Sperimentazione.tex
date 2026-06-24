@@ -72,7 +72,7 @@ Circa il 42\% dei token generati dal Transformer, decodificati tramite il decode
 
 Il problema è strutturale: la quantizzazione vettoriale, la loss avversaria e la loss percettiva addestrano l'autoencoder a produrre ricostruzioni visivamente fedeli, non a garantire l'invertibilità del codice. La mappa dallo spazio immagine allo spazio dei codici discreti non è iniettiva, e codici diversi possono produrre pixel simili (e viceversa).
 
-Abbiamo quindi indagato la possibilità di introdurre un meccanismo di verifica che, dopo aver selezionato un token $i^*$ in una posizione $(r,c)$, decodificasse l'intera griglia di indici fino a quel momento costruita, la ricodificasse con l'encoder, e verificasse che il token nella posizione $(r,c)$ corrispondesse effettivamente a $i^*$. L'idea era iterare la selezione fino a trovare un token che sopravvivesse al round-trip encoding--decoding--encoding. Tuttavia, questa strategia si è rivelata impraticabile per una ragione architetturale di fondo: il decoder VQ-GAN è composto da strati convoluzionali che operano sull'intera griglia spaziale, e la decodifica di una griglia parzialmente popolata, in cui molte posizioni contengono ancora un valore di default o non sono ancora state generate, produce un'immagine che non corrisponde a una porzione dell'immagine finale. In altri termini, la decodifica parziale non è equivalente alla decodifica completa ristretta a una sotto-regione: i filtri convoluzionali mescolano informazione attraverso i confini delle posizioni già fissate e di quelle ancora indefinite, invalidando la verifica locale. Il meccanismo è stato pertanto accantonato.
+Abbiamo quindi esplorato la possibilità di introdurre un meccanismo di verifica che, dopo aver selezionato un token $i^*$ in una posizione $(r,c)$, decodificasse l'intera griglia di indici fino a quel momento costruita, la ricodificasse con l'encoder, e verificasse che il token nella posizione $(r,c)$ corrispondesse effettivamente a $i^*$. L'idea era iterare la selezione fino a trovare un token che sopravvivesse al round-trip encoding--decoding--encoding. Tuttavia, questa strategia si è rivelata impraticabile per una ragione architetturale di fondo: il decoder VQ-GAN è composto da strati convoluzionali che operano sull'intera griglia spaziale, e la decodifica di una griglia parzialmente popolata, in cui molte posizioni contengono ancora un valore di default o non sono ancora state generate, produce un'immagine che non corrisponde a una porzione dell'immagine finale. In altri termini, la decodifica parziale non è equivalente alla decodifica completa ristretta a una sotto-regione: i filtri convoluzionali mescolano informazione attraverso i confini delle posizioni già fissate e di quelle ancora indefinite, invalidando la verifica locale. Il meccanismo è stato pertanto accantonato.
 
 \subsection{Risultati e limitazioni}
 
@@ -80,23 +80,23 @@ L'impossibilità di verificare la sopravvivenza dei token durante la generazione
 
 La causa profonda è la non-invertibilità intrinseca dell'architettura: l'encoder e il decoder sono funzioni statistiche apprese separatamente, non coppie di trasformazioni inverse progettate per essere biettive. La quantizzazione vettoriale introduce un'ulteriore perdita: due vettori latenti simili possono essere quantizzati allo stesso indice, ma la mappa inversa non è garantita. A differenza di un LLM, dove il token generato è esattamente il token che il destinatario legge (il canale testuale è \emph{lossless}), nella VQ-GAN il token scelto dal Transformer attraversa un canale rumoroso (il passaggio attraverso pixel continui e la riquantizzazione dell'encoder), ovvero soggetto ad errori sistematici, che ne altera l'identità in quasi metà dei casi.
 
-\section{Tentativo di fine tuning dell'encoder VQ-GAN}
+\section{Tentativo di fine-tuning dell'encoder VQ-GAN}
 
 \subsection{Obiettivo}
 
-Per superare la limitazione della non-invertibilità, abbiamo esplorato la possibilità di addestrare l'encoder VQ-GAN a produrre codici invertibili rispetto al decoder fisso, tramite un fine tuning mirato.
+Per superare la limitazione della non-invertibilità, abbiamo esplorato la possibilità di addestrare l'encoder VQ-GAN a produrre codici invertibili rispetto al decoder fisso, tramite un fine-tuning mirato.
 
-\subsection{Strategia di fine tuning}
+\subsection{Strategia di fine-tuning}
 
-L'approccio è stato quello di congelare i pesi del decoder e del codebook della VQ-GAN, componenti che contribuiscono direttamente alla generazione delle immagini e la cui modifica avrebbe alterato l'inferenza, e addestrare soltanto l'encoder con una funzione di loss modificata. L'obiettivo era minimizzare l'errore di ricostruzione del codice:
+L'approccio è stato quello di congelare i pesi del decoder e del codebook della VQ-GAN — componenti che contribuiscono direttamente alla generazione delle immagini e la cui modifica avrebbe alterato l'inferenza — e addestrare soltanto l'encoder con una funzione di loss modificata. L'obiettivo era minimizzare l'errore di ricostruzione del codice:
 \[
 	\mathcal{L}_{\mathrm{inv}} = \bigl\| \mathbf{S} - \mathrm{Encoder}_{VQ}\bigl(\mathrm{Decoder}_{VQ}(\mathbf{S})\bigr) \bigr\|_2^2,
 \]
-dove $\mathbf{S}$ è la griglia di indici discreti originali e $\mathrm{Encoder}_{VQ}(\mathrm{Decoder}_{VQ}(\mathbf{S}))$ è la griglia ottenuta ricodificando l'immagine decodificata. Minimizzando questa loss l'encoder è incoraggiato a produrre rappresentazioni latenti che, dopo decodifica e ricodifica, preservino gli indici originali.
+dove $\mathbf{S}$ è la griglia di indici discreti originali e $\mathrm{Encoder}_{VQ}(\mathrm{Decoder}_{VQ}(\mathbf{S}))$ è la griglia ottenuta ricodificando l'immagine decodificata. Minimizzando questa loss, l'encoder è incoraggiato a produrre rappresentazioni latenti che, dopo decodifica e ricodifica, preservino gli indici originali.
 
 \subsection{Risultati}
 
-Il fine-tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzione dei codici si è ridotto significativamente, con un aumento della percentuale di token invariati dopo il round-trip encoding-decoding-encoding fino al 99.82\%. Tuttavia, anche dopo l'addestramento, una frazione non trascurabile di token continuava a subire fluttuazioni. Operando questa analisi abbiamo notato che in realtà il \emph{flip-rate} precedente non risultava pari al 42\% come stimato inizialmente, ma era più basso, circa il 24\%. Questo perché la VQ-GAN non è un canale binario indipendente per ciascun token: la dipendenza tra i token e la propagazione dell'errore attraverso il decoder convoluzionale produce un effetto ``a cascata'' che amplifica gli errori locali. Oltre a ciò rimane il problema della compressione in PNG a 8-bit per colore la quale introduce una variazione dei pixel dovuta alla compressione e alla quantizzazione che altera la ricodifica dei token.
+Il fine-tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzione dei codici si è ridotto significativamente, con un aumento della percentuale di token invariati dopo il round-trip encoding-decoding-encoding fino al 99.82\%. Tuttavia, anche dopo l'addestramento, una frazione non trascurabile di token continuava a subire fluttuazioni. Operando questa analisi, abbiamo notato che in realtà il \emph{flip-rate} precedente non risultava pari al 42\% come stimato inizialmente, ma era più basso, circa il 24\%. Questo perché la VQ-GAN non è un canale binario indipendente per ciascun token: la dipendenza tra i token e la propagazione dell'errore attraverso il decoder convoluzionale produce un effetto ``a cascata'' che amplifica gli errori locali. A questo si aggiunge il problema della compressione in PNG a 8~bit per colore, che introduce una variazione dei pixel — dovuta alla compressione e alla quantizzazione — la quale altera la ricodifica dei token.
 
 L'analisi ha mostrato che il condizionamento intrinseco della VQ-GAN, ovvero la dipendenza di ciascuna posizione $(r, c)$ dall'intera griglia di token circostanti, impedisce una convergenza a zero dell'errore. Modificare un singolo token nella griglia altera la ricostruzione dell'intera immagine, che a sua volta altera la codifica di tutte le altre posizioni. Questo effetto di ``propagazione laterale'' rende il problema intrattabile attraverso un fine-tuning dell'encoder.
 
@@ -136,7 +136,7 @@ Il meccanismo è il seguente:
 
 Il punto critico è che i token ricevuti $s_{<t}'$ possono differire da quelli originali $s_{<t}$ a causa del rumore del canale PNG. Se un singolo token $s_k$ (per qualche $k < t$) viene alterato, tutte le distribuzioni successive $P(s_t \mid s_{<t}')$ sono calcolate su un contesto corrotto e non corrispondono più a quelle utilizzate dal mittente. Questo genera una cascata: un errore in posizione $k$ corrompe tutte le predizioni da $k+1$ in poi.
 
-A questo si aggiunge un secondo effetto: l'arithmetic coding a bitrate variabile. Poiché token diversi possono codificare un numero diverso di bit (in funzione dell'entropia della distribuzione), un singolo flip di token altera il numero di bit che il ricevente legge in quella posizione, causando un disallineamento dell'intero flusso binario -- un secondo meccanismo indipendente di desincronizzazione.
+A questo si aggiunge un secondo effetto: l'arithmetic coding a bitrate variabile. Poiché token diversi possono codificare un numero diverso di bit (in funzione dell'entropia della distribuzione), un singolo flip di token altera il numero di bit che il destinatario legge in quella posizione, causando un disallineamento dell'intero flusso binario — un secondo meccanismo indipendente di desincronizzazione.
 
 \subsection{Misurazione dell'errore}
 
@@ -190,11 +190,11 @@ L'esperimento ha prodotto risultati positivi:
 
 L'esperimento di embedding nei piani di bit ha anche messo in luce una tensione fondamentale, che rappresenta il limite intrinseco di questo approccio.
 
-Un bit di una dimensione latente è \emph{robusto} (sopravvive al canale PNG) quando la dimensione corrispondente ha \emph{magnitudo elevata}, ovvero lontana dallo zero, dove il rumore del canale difficilmente ne inverte il segno. Tuttavia, forzare il segno di una dimensione a magnitudo elevata produce una \emph{grande perturbazione nell'immagine}. Al contrario, le dimensioni a magnitudo ridotta possono essere modificate con minor impatto visivo, ma sono più fragili al rumore del canale.
+Un bit di una dimensione latente è \emph{robusto} (sopravvive al canale PNG) quando la dimensione corrispondente ha \emph{magnitudo elevata}, ovvero lontana dallo zero, dove il rumore del canale difficilmente ne inverte il segno. Tuttavia, forzare il segno di una dimensione a magnitudo elevata produce una \emph{grande perturbazione nell'immagine}. Al contrario, le dimensioni a magnitudo ridotta possono essere modificate con minor impatto visivo, ma sono più vulnerabili al rumore del canale.
 
-Le misurazioni sui vari piani di bit mostrano una variabilità significativa: i piani più robusti hanno un flip rate del $\sim 2\%$, quelli più fragili arrivano a $\sim 11\%$. Inoltre, sovrascrivere più di circa metà dei 18 piani di bit (strength $> 9$) spinge l'immagine fuori dal manifold naturale del tokenizer, degradando tutti i piani e facendo saltare il flip rate effettivo dal $\sim 4\%$ al $11-18\%$.
+Le misurazioni sui vari piani di bit mostrano una variabilità significativa: i piani più robusti hanno un flip rate del $\sim 2\%$, quelli più fragili arrivano a $\sim 11\%$. Inoltre, sovrascrivere più di circa metà dei 18 piani di bit (strength $> 9$) spinge l'immagine fuori dal manifold naturale del tokenizer, degradando tutti i piani e portando il flip rate effettivo dal $\sim 4\%$ al $11$--$18\%$.
 
-Questa tensione è la manifestazione, in una nuova forma, dello stesso problema incontrato con Meteor/autoregressivo: \emph{l'indistinguibilità statistica e la robustezza a un canale rumoroso sono mutuamente esclusive} per questo tipo di sistemi. Lo schema basato sulla scelta del token (autoregressivo) acquista indistinguibilità e paga con la fragilità; lo schema basato sui piani di bit (QIM) acquista robustezza e paga con la rilevabilità.
+Questa tensione è la manifestazione, in una nuova forma, dello stesso problema incontrato con Meteor/autoregressivo: \emph{l'indistinguibilità statistica e la robustezza rispetto a un canale rumoroso sono mutuamente esclusive} per questo tipo di sistemi. Lo schema basato sulla scelta del token (autoregressivo) acquista indistinguibilità e paga con la fragilità; lo schema basato sui piani di bit (QIM) acquista robustezza e paga con la rilevabilità.
 
 \section{Sintesi dei risultati sperimentali}
 
@@ -209,7 +209,7 @@ La tabella seguente riassume i risultati ottenuti nei vari esperimenti:
 		\textbf{Configurazione}      & \textbf{Canale} & \textbf{BER} & \textbf{Recupero} \\
 		\midrule
 		VQ-GAN + Meteor              & Pixel PNG       & $\sim 42\%$  & Parziale          \\
-		VQ-GAN + fine tuning encoder & Pixel PNG       & $>0\%$       & Parziale          \\
+		VQ-GAN + fine-tuning encoder & Pixel PNG       & $>0\%$       & Parziale          \\
 		OpenMAGVIT2 + Meteor         & Pixel PNG       & $\sim 65\%$  & Assente           \\
 		OpenMAGVIT2 + Meteor         & Token lossless  & $0\%$        & Completo          \\
 		OpenMAGVIT2 + QIM            & Pixel PNG       & $< 5\%$      & Completo          \\
@@ -222,9 +222,9 @@ I risultati confermano che:
 
 \begin{enumerate}
 	\item L'algoritmo di campionamento di Meteor è concettualmente applicabile ai token visivi, come dimostrato dall'esperimento su canale lossless (recupero esatto del 100\% dei bit).
-	\item La \emph{non-invertibilità} della VQ-GAN impedisce un'applicazione diretta, e il fine tuning dell'encoder non è sufficiente a risolvere strutturalmente il problema.
+	\item La \emph{non-invertibilità} della VQ-GAN impedisce un'applicazione diretta, e il fine-tuning dell'encoder non è sufficiente a risolvere strutturalmente il problema.
 	\item Anche con un tokenizer invertibile (Open-MAGVIT2/LFQ), la \emph{propagazione dell'errore} nel modello autoregressivo rende il recupero impossibile su un canale pixel rumoroso.
-	\item L'\emph{embedding diretto nei piani di bit} (QIM) supera il problema della propagazione, ma al costo di essere un watermark rilevabile, non una steganografia indistinguibile, quindi fortemente suscetibile ad algoritmi di steganalisi.
+	\item L'\emph{embedding diretto nei piani di bit} (QIM) supera il problema della propagazione, ma al costo di essere un watermark rilevabile, non una steganografia indistinguibile, e quindi fortemente suscettibile ad algoritmi di steganalisi.
 \end{enumerate}
 
 \section{Limitazioni emerse}
