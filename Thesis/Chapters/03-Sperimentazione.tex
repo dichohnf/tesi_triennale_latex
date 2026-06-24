@@ -88,7 +88,7 @@ Per superare la limitazione della non-invertibilità, abbiamo esplorato la possi
 
 \subsection{Strategia di fine-tuning}
 
-L'approccio è stato quello di congelare i pesi del decoder e del codebook della VQ-GAN — componenti che contribuiscono direttamente alla generazione delle immagini e la cui modifica avrebbe alterato l'inferenza — e addestrare soltanto l'encoder con una funzione di loss modificata. L'obiettivo era minimizzare l'errore di ricostruzione del codice:
+L'approccio è stato quello di congelare i pesi del decoder e del codebook della VQ-GAN, componenti che contribuiscono direttamente alla generazione delle immagini e la cui modifica avrebbe alterato l'inferenza, e addestrare soltanto l'encoder con una funzione di loss modificata. L'obiettivo era minimizzare l'errore di ricostruzione del codice:
 \[
 	\mathcal{L}_{\mathrm{inv}} = \bigl\| \mathbf{S} - \mathrm{Encoder}_{VQ}\bigl(\mathrm{Decoder}_{VQ}(\mathbf{S})\bigr) \bigr\|_2^2,
 \]
@@ -100,19 +100,13 @@ Il fine-tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzion
 
 L'analisi ha mostrato che il condizionamento intrinseco della VQ-GAN, ovvero la dipendenza di ciascuna posizione $(r, c)$ dall'intera griglia di token circostanti, impedisce una convergenza a zero dell'errore. Modificare un singolo token nella griglia altera la ricostruzione dell'intera immagine, che a sua volta altera la codifica di tutte le altre posizioni. Questo effetto di ``propagazione laterale'' rende il problema intrattabile attraverso un fine-tuning dell'encoder.
 
-\section{Equivalenza del Transformer: Meteor è applicabile ai token visivi}
-
-\subsection{La verifica concettuale}
-
-Pur con le limitazioni legate alla non-invertibilità, abbiamo voluto verificare se, a livello di Transformer, l'algoritmo di campionamento di Meteor fosse applicabile anche ai token visivi. Per rispondere, abbiamo isolato il Transformer dal tokenizer e confrontato i due processi di generazione. In Meteor, un LLM produce a ogni passo una distribuzione $P(w_t \mid w_{<t})$ sul vocabolario testuale; l'arithmetic coding consuma una porzione del messaggio segreto e seleziona il token $w_t$ il cui intervallo cumulativo contiene i bit letti. Nel Transformer della VQ-GAN, il modello produce una distribuzione $P(s_t \mid s_{<t})$ sul codebook e l'arithmetic coding seleziona l'indice $s_t$ con lo stesso identico criterio. Le due operazioni sono formalmente equivalenti: in entrambi i casi si seleziona un elemento da un insieme finito secondo una distribuzione di probabilità, guidati da una sequenza binaria. La conclusione è che l'algoritmo di Meteor è direttamente trasponibile ai token visivi; il vero ostacolo non risiede nel meccanismo di campionamento, ma nella fedeltà del canale encoding-decoding, cioè nella capacità del tokenizer di restituire, dopo il round-trip attraverso i pixel, gli stessi indici su cui il Transformer è stato condizionato. A conferma di ciò, si è verificato sperimentalmente che l'implementazione senza passare dal dominio dei pixel ha ottenuto il 100\% di successo nel ripristinare il messaggio originale.
-
-La \autoref{fig:vqgan-sampling-comparison} e la \autoref{fig:vqgan-sampling-attack} mostrano un confronto visivo tra le due modalità di generazione per due diversi messaggi segreti: a parità di seed, le immagini prodotte appaiono strutturalmente simili e prive di artefatti non presenti anche nelle immagini generate tramite sampling, confermando che il meccanismo di arithmetic coding non introduce degradazioni visive rilevabili rispetto all'approccio tradizionale.
+Ciononostante, il miglioramento ottenuto con il fine-tuning ha reso possibile una verifica visiva della qualità delle immagini generate con arithmetic coding steganografico. La \autoref{fig:vqgan-sampling-comparison} e la \autoref{fig:vqgan-sampling-attack} mostrano un confronto tra campionamento casuale e campionamento aritmetico steganografico del Transformer con encoder fine-tuned: a parità di seed, le immagini prodotte appaiono strutturalmente simili e prive di artefatti non presenti anche nelle immagini generate tramite sampling, confermando che il meccanismo di arithmetic coding non introduce degradazioni visive rilevabili. Le immagini con encoder fine-tuned non presentano differenze visive apprezzabili rispetto alle analoghe generate senza fine-tuning (riportate nella sezione successiva, \autoref{fig:vqgan-sampling-nofine}), indicando che l'addestramento aggiuntivo dell'encoder non altera la qualità percettiva dell'output, sebbene ne alteri la distribuzione di probabilità.
 
 \begin{figure}[htbp]
 	\centering
 	\subfloat[Messaggio ``\texttt{42}'']{\includegraphics[width=0.6\textwidth]{message_42.png}}\hfill
-	\subfloat[Messaggio ``\texttt{pippopippo}'']{\includegraphics[width=0.6\textwidth]{message_pippopippo.png}}
-	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico del Transformer VQ-GAN]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR) per due diversi messaggi segreti, a parità di seed. L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva, confermando l'applicabilità dell'algoritmo di Meteor a livello di token visivi.}
+	\subfloat[Messaggio ``\texttt{Pippo pippo}'']{\includegraphics[width=0.6\textwidth]{message_pippopippo.png}}
+	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico del Transformer VQ-GAN con encoder fine-tuned]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR, encoder fine-tuned) per due diversi messaggi segreti, a parità di seed. L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva.}
 	\label{fig:vqgan-sampling-comparison}
 \end{figure}
 
@@ -120,8 +114,24 @@ La \autoref{fig:vqgan-sampling-comparison} e la \autoref{fig:vqgan-sampling-atta
 	\centering
 	\subfloat[``\texttt{Attack@Dawn}'' (gruppo 1)]{\includegraphics[width=0.7\textwidth]{message_att1.png}}\hfill
 	\subfloat[``\texttt{Attack@Dawn}'' (gruppo 2)]{\includegraphics[width=0.7\textwidth]{message_att2.png}}
-	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico per Attack@Dawn]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR) per il messaggio \texttt{Attack@Dawn}, su due gruppi diversi di seed (sei run totali). L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva.}
+	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico per Attack@Dawn con encoder fine-tuned]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR, encoder fine-tuned) per il messaggio \texttt{Attack@Dawn}, su due gruppi diversi di seed (sei run totali). L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva.}
 	\label{fig:vqgan-sampling-attack}
+\end{figure}
+
+\section{Equivalenza del Transformer}
+
+\subsection{La verifica concettuale}
+
+Pur con le limitazioni legate alla non-invertibilità, abbiamo voluto verificare se, a livello di Transformer, l'algoritmo di campionamento di Meteor fosse applicabile anche ai token visivi. Per rispondere, abbiamo isolato il Transformer dal tokenizer e confrontato i due processi di generazione. In Meteor, un LLM produce a ogni passo una distribuzione $P(w_t \mid w_{<t})$ sul vocabolario testuale; l'arithmetic coding consuma una porzione del messaggio segreto e seleziona il token $w_t$ il cui intervallo cumulativo contiene i bit letti. Nel Transformer della VQ-GAN, il modello produce una distribuzione $P(s_t \mid s_{<t})$ sul codebook e l'arithmetic coding seleziona l'indice $s_t$ con lo stesso identico criterio. Le due operazioni sono formalmente equivalenti: in entrambi i casi si seleziona un elemento da un insieme finito secondo una distribuzione di probabilità, guidati da una sequenza binaria. La conclusione è che l'algoritmo di Meteor è direttamente trasponibile ai token visivi; il vero ostacolo non risiede nel meccanismo di campionamento, ma nella fedeltà del canale encoding-decoding, cioè nella capacità del tokenizer di restituire, dopo il round-trip attraverso i pixel, gli stessi indici su cui il Transformer è stato condizionato. A conferma di ciò, si è verificato sperimentalmente che l'implementazione senza passare dal dominio dei pixel ha ottenuto il 100\% di successo nel ripristinare il messaggio originale.
+
+La \autoref{fig:vqgan-sampling-nofine} mostra un confronto visivo tra campionamento casuale e campionamento aritmetico steganografico per il messaggio ``\texttt{Find me!}'', utilizzando i pesi \emph{originali} del modello S-FLCKR, senza alcun fine-tuning dell'encoder. Su due gruppi indipendenti di seed, le immagini prodotte con arithmetic coding appaiono strutturalmente simili a quelle ottenute tramite campionamento casuale e prive di artefatti aggiuntivi, confermando che il meccanismo di arithmetic coding non introduce degradazioni visive rilevabili e che l'algoritmo di Meteor è applicabile ai token visivi indipendentemente dall'addestramento dell'encoder.
+
+\begin{figure}[htbp]
+	\centering
+	\subfloat[Messaggio ``\texttt{Find me!}'' (gruppo~1)]{\includegraphics[width=0.6\textwidth]{no_fine_message_findme1.png}}\hfill
+	\subfloat[Messaggio ``\texttt{Find me!}'' (gruppo~2)]{\includegraphics[width=0.6\textwidth]{no_fine_message_findme2.png}}
+	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico del Transformer VQ-GAN senza fine-tuning]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR, pesi originali senza fine-tuning) per il messaggio \texttt{Find me!}, su due gruppi indipendenti di seed. L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva, confermando l'applicabilità dell'algoritmo di Meteor a livello di token visivi già con i pesi originali.}
+	\label{fig:vqgan-sampling-nofine}
 \end{figure}
 
 \subsection{Implicazione per la scelta dell'architettura}
