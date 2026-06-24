@@ -68,7 +68,7 @@ Durante i test preliminari è emersa una criticità fondamentale: l'encoder e il
 \]
 
 
-Circa il 42\% dei token generati dal Transformer, decodificati tramite il decoder VQ-GAN e ricodificati utilizzando l'encoder, non corrispondono. Questa asimmetria implica che il token selezionato durante l'encoding steganografico potrebbe non corrispondere a quello ottenuto ricodificando l'immagine generata tramite l'encoder VQ-GAN. In altre parole, dopo aver scelto un indice $i^*$ per una posizione $(r, c)$, aver decodificato l'immagine e averla riprocessata con l'encoder, la posizione $(r, c)$ potrebbe produrre un indice diverso $i' \ne i^*$.
+Circa il 19\% dei token generati dal Transformer, decodificati tramite il decoder VQ-GAN e ricodificati utilizzando l'encoder, non corrispondono. Questa asimmetria implica che il token selezionato durante l'encoding steganografico potrebbe non corrispondere a quello ottenuto ricodificando l'immagine generata tramite l'encoder VQ-GAN. In altre parole, dopo aver scelto un indice $i^*$ per una posizione $(r, c)$, aver decodificato l'immagine e averla riprocessata con l'encoder, la posizione $(r, c)$ potrebbe produrre un indice diverso $i' \ne i^*$.
 
 Il problema è strutturale: la quantizzazione vettoriale, la loss avversaria e la loss percettiva addestrano l'autoencoder a produrre ricostruzioni visivamente fedeli, non a garantire l'invertibilità del codice. La mappa dallo spazio immagine allo spazio dei codici discreti non è iniettiva, e codici diversi possono produrre pixel simili (e viceversa).
 
@@ -76,7 +76,7 @@ Abbiamo quindi esplorato la possibilità di introdurre un meccanismo di verifica
 
 \subsection{Risultati e limitazioni}
 
-L'impossibilità di verificare la sopravvivenza dei token durante la generazione ha reso l'approccio diretto autoregressivo (AR) con VQ-GAN di fatto inutilizzabile: senza un riscontro locale sulla coerenza tra il token selezionato e quello che il destinatario osserverà dopo il round-trip attraverso il canale pixel, la decodifica steganografica produce un flusso di bit corrotto già dopo i primi token. Il $\sim\!42\%$ di token che non sopravvivono al ciclo encoding--decoding--encoding si traduce in un tasso d'errore sul messaggio recuperato che rende impossibile qualsiasi comunicazione affidabile anche utilizzando algoritmi di correzione d'errore sui bit del messaggio. In altre parole, il canale visivo così costruito non è \emph{lossless} e non può supportare la trasmissione di informazione segreta in modo affidabile.
+L'impossibilità di verificare la sopravvivenza dei token durante la generazione ha reso l'approccio diretto autoregressivo (AR) con VQ-GAN di fatto inutilizzabile: senza un riscontro locale sulla coerenza tra il token selezionato e quello che il destinatario osserverà dopo il round-trip attraverso il canale pixel, la decodifica steganografica produce un flusso di bit corrotto già dopo i primi token. Il $\sim\!19\%$ di token che non sopravvivono al ciclo encoding--decoding--encoding si traduce in un tasso d'errore sul messaggio recuperato che rende impossibile qualsiasi comunicazione affidabile anche utilizzando algoritmi di correzione d'errore sui bit del messaggio. In altre parole, il canale visivo così costruito non è \emph{lossless} e non può supportare la trasmissione di informazione segreta in modo affidabile.
 
 La causa profonda è la non-invertibilità intrinseca dell'architettura: l'encoder e il decoder sono funzioni statistiche apprese separatamente, non coppie di trasformazioni inverse progettate per essere biettive. La quantizzazione vettoriale introduce un'ulteriore perdita: due vettori latenti simili possono essere quantizzati allo stesso indice, ma la mappa inversa non è garantita. A differenza di un LLM, dove il token generato è esattamente il token che il destinatario legge (il canale testuale è \emph{lossless}), nella VQ-GAN il token scelto dal Transformer attraversa un canale rumoroso (il passaggio attraverso pixel continui e la riquantizzazione dell'encoder), ovvero soggetto ad errori sistematici, che ne altera l'identità in quasi metà dei casi.
 
@@ -96,7 +96,7 @@ dove $\mathbf{S}$ è la griglia di indici discreti originali e $\mathrm{Encoder}
 
 \subsection{Risultati}
 
-Il fine-tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzione dei codici si è ridotto significativamente, con un aumento della percentuale di token invariati dopo il round-trip encoding-decoding-encoding fino al 99.82\%. Tuttavia, anche dopo l'addestramento, una frazione non trascurabile di token continuava a subire fluttuazioni. Operando questa analisi, abbiamo notato che in realtà il \emph{flip-rate} precedente non risultava pari al 42\% come stimato inizialmente, ma era più basso, circa il 24\%. Questo perché la VQ-GAN non è un canale binario indipendente per ciascun token: la dipendenza tra i token e la propagazione dell'errore attraverso il decoder convoluzionale produce un effetto ``a cascata'' che amplifica gli errori locali. A questo si aggiunge il problema della compressione in PNG a 8~bit per colore, che introduce una variazione dei pixel — dovuta alla compressione e alla quantizzazione — la quale altera la ricodifica dei token.
+Il fine-tuning ha prodotto un miglioramento misurabile: l'errore di ricostruzione dei codici si è ridotto significativamente, con un aumento della percentuale di token invariati dopo il round-trip encoding-decoding-encoding fino al $\sim$98\%. Tuttavia, anche dopo l'addestramento, una frazione non trascurabile di token continuava a subire fluttuazioni. Operando questa analisi, abbiamo notato che in realtà il \emph{flip-rate} precedente non risultava pari al 19\% come stimato inizialmente, ma era più basso, circa il 10\%. Questo perché la VQ-GAN non è un canale binario indipendente per ciascun token: la dipendenza tra i token e la propagazione dell'errore attraverso il decoder convoluzionale produce un effetto ``a cascata'' che amplifica gli errori locali. A questo si aggiunge il problema della compressione in PNG a 8~bit per colore, che introduce una variazione dei pixel, dovuta alla compressione e alla quantizzazione, la quale altera la ricodifica dei token.
 
 L'analisi ha mostrato che il condizionamento intrinseco della VQ-GAN, ovvero la dipendenza di ciascuna posizione $(r, c)$ dall'intera griglia di token circostanti, impedisce una convergenza a zero dell'errore. Modificare un singolo token nella griglia altera la ricostruzione dell'intera immagine, che a sua volta altera la codifica di tutte le altre posizioni. Questo effetto di ``propagazione laterale'' rende il problema intrattabile attraverso un fine-tuning dell'encoder.
 
@@ -108,7 +108,7 @@ Pur con le limitazioni legate alla non-invertibilità, abbiamo voluto verificare
 
 \subsection{Implicazione per la scelta dell'architettura}
 
-Questa verifica ha orientato la ricerca verso un tokenizer visivo che offrisse garanzie di invertibilità. L'architettura candidata è stata \textbf{Open-MAGVIT2} \cite{luo-2024}, che utilizza la \emph{Lookup-Free Quantization} (\textbf{LFQ}), una tecnica di quantizzazione intrinsecamente invertibile (\autoref{sec:lfq}).
+Questa verifica ha orientato la ricerca verso un tokenizer visivo che offrisse garanzie di invertibilità. L'architettura candidata è stata \textbf{Open-MAGVIT2} \cite{luo-2025}, che utilizza la \emph{Lookup-Free Quantization} (\textbf{LFQ}), una tecnica di quantizzazione intrinsecamente invertibile (\autoref{sec:lfq}).
 
 \section{Sperimentazione con Open-MAGVIT2}
 
@@ -208,8 +208,8 @@ La tabella seguente riassume i risultati ottenuti nei vari esperimenti:
 		\toprule
 		\textbf{Configurazione}      & \textbf{Canale} & \textbf{BER} & \textbf{Recupero} \\
 		\midrule
-		VQ-GAN + Meteor              & Pixel PNG       & $\sim 42\%$  & Parziale          \\
-		VQ-GAN + fine-tuning encoder & Pixel PNG       & $>0\%$       & Parziale          \\
+		VQ-GAN + Meteor              & Pixel PNG       & $\sim 19\%$  & Parziale          \\
+		VQ-GAN + fine-tuning encoder & Pixel PNG       & $\sim 10\%$       & Parziale          \\
 		OpenMAGVIT2 + Meteor         & Pixel PNG       & $\sim 65\%$  & Assente           \\
 		OpenMAGVIT2 + Meteor         & Token lossless  & $0\%$        & Completo          \\
 		OpenMAGVIT2 + QIM            & Pixel PNG       & $< 5\%$      & Completo          \\
