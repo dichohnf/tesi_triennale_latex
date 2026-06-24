@@ -141,6 +141,13 @@ Il primo stadio è un autoencoder convoluzionale che trasforma un'immagine in un
 	\item \textbf{Decoder convoluzionale} $G$: trasforma la griglia di vettori quantizzati $\mathbf{z}_q$ nuovamente nello spazio immagine, tramite strati di transposed convolution che effettuano upsampling fino alla risoluzione originale.
 \end{itemize}
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.85\textwidth]{taming_modelfigure.pdf}
+	\caption[Rappresentazione schematica dell'architettura VQ-GAN]{Rappresentazione schematica dell'architettura VQ-GAN: l'encoder convoluzionale riduce l'immagine in una griglia di token discreti tramite quantizzazione vettoriale sul codebook; il Transformer autoregressivo modella la distribuzione dei token; il decoder convoluzionale ricostruisce l'immagine. Fonte: \cite{esser-2020}.}
+	\label{fig:vqgan-architecture}
+\end{figure}
+
 \subsubsection{Funzione di loss e addestramento}
 
 La VQ-GAN introduce due innovazioni rispetto alla VQ-VAE \cite{van-den-oord-2017}, sua precorritrice:
@@ -155,9 +162,23 @@ La VQ-GAN introduce due innovazioni rispetto alla VQ-VAE \cite{van-den-oord-2017
 
 Il secondo stadio è un modello Transformer autoregressivo che apprende la distribuzione dei token visivi sulla griglia. Dato un contesto di $p \times p$ token, il modello prevede la distribuzione di probabilità sul token successivo. Questo stadio opera esclusivamente sugli indici discreti del codebook e non interagisce direttamente con lo spazio immagine.
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.85\textwidth]{taming_attentionslide.pdf}
+	\caption[Meccanismo di attention del Transformer nella VQ-GAN]{Meccanismo di attention del Transformer autoregressivo nella VQ-GAN: la generazione del token successivo è condizionata dai token circostanti nella griglia spaziale, permettendo al modello di catturare dipendenze locali e globali. Fonte: \cite{esser-2020}.}
+	\label{fig:vqgan-attention}
+\end{figure}
+
 \subsection{Open-MAGVIT2 e Lookup-Free Quantization (LFQ)}
 
-\emph{Open-MAGVIT2} \cite{luo-2024} è un tokenizer visivo all'avanguardia che introduce la \emph{Lookup-Free Quantization} (\textbf{LFQ}), una tecnica di quantizzazione che elimina la necessità di un codebook esplicito.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.90\textwidth]{open-magvit2_framework.pdf}
+	\caption[Architettura e funzionamento di Open-MAGVIT2]{Architettura e funzionamento di Open-MAGVIT2: il framework combina un encoder convoluzionale con Lookup-Free Quantization (LFQ) per produrre token binari senza codebook esplicito, e un Transformer autoregressivo (Net2NetTransformer) per la generazione della sequenza di token. Fonte: \cite{luo-2025}.}
+	\label{fig:open-magvit2-framework}
+\end{figure}
+
+\emph{Open-MAGVIT2} \cite{luo-2025} è un tokenizer visivo all'avanguardia che introduce la \emph{Lookup-Free Quantization} (\textbf{LFQ}), una tecnica di quantizzazione che elimina la necessità di un codebook esplicito.
 
 \subsubsection{Principio della LFQ}
 \label{sec:lfq}
