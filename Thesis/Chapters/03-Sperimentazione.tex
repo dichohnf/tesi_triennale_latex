@@ -106,7 +106,7 @@ L'analisi ha mostrato che il condizionamento intrinseco della VQ-GAN, ovvero la 
 
 Pur con le limitazioni legate alla non-invertibilità, abbiamo voluto verificare se, a livello di Transformer, l'algoritmo di campionamento di Meteor fosse applicabile anche ai token visivi. Per rispondere, abbiamo isolato il Transformer dal tokenizer e confrontato i due processi di generazione. In Meteor, un LLM produce a ogni passo una distribuzione $P(w_t \mid w_{<t})$ sul vocabolario testuale; l'arithmetic coding consuma una porzione del messaggio segreto e seleziona il token $w_t$ il cui intervallo cumulativo contiene i bit letti. Nel Transformer della VQ-GAN, il modello produce una distribuzione $P(s_t \mid s_{<t})$ sul codebook e l'arithmetic coding seleziona l'indice $s_t$ con lo stesso identico criterio. Le due operazioni sono formalmente equivalenti: in entrambi i casi si seleziona un elemento da un insieme finito secondo una distribuzione di probabilità, guidati da una sequenza binaria. La conclusione è che l'algoritmo di Meteor è direttamente trasponibile ai token visivi; il vero ostacolo non risiede nel meccanismo di campionamento, ma nella fedeltà del canale encoding-decoding, cioè nella capacità del tokenizer di restituire, dopo il round-trip attraverso i pixel, gli stessi indici su cui il Transformer è stato condizionato. A conferma di ciò, si è verificato sperimentalmente che l'implementazione senza passare dal dominio dei pixel ha ottenuto il 100\% di successo nel ripristinare il messaggio originale.
 
-La \autoref{fig:vqgan-sampling-comparison} mostra un confronto visivo tra le due modalità di generazione per due diversi messaggi segreti: a parità di seed, le immagini prodotte appaiono strutturalmente simili e prive di artefatti percettibili, confermando che il meccanismo di arithmetic coding non introduce degradazioni visive rilevabili.
+La \autoref{fig:vqgan-sampling-comparison} e la \autoref{fig:vqgan-sampling-attack} mostrano un confronto visivo tra le due modalità di generazione per due diversi messaggi segreti: a parità di seed, le immagini prodotte appaiono strutturalmente simili e prive di artefatti non presenti anche nelle immagini generate tramite sampling, confermando che il meccanismo di arithmetic coding non introduce degradazioni visive rilevabili rispetto all'approccio tradizionale.
 
 \begin{figure}[htbp]
 	\centering
@@ -114,6 +114,14 @@ La \autoref{fig:vqgan-sampling-comparison} mostra un confronto visivo tra le due
 	\subfloat[Messaggio ``\texttt{pippopippo}'']{\includegraphics[width=0.6\textwidth]{message_pippopippo.png}}
 	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico del Transformer VQ-GAN]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR) per due diversi messaggi segreti, a parità di seed. L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva, confermando l'applicabilità dell'algoritmo di Meteor a livello di token visivi.}
 	\label{fig:vqgan-sampling-comparison}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\subfloat[``\texttt{Attack@Dawn}'' (gruppo 1)]{\includegraphics[width=0.7\textwidth]{message_att1.png}}\hfill
+	\subfloat[``\texttt{Attack@Dawn}'' (gruppo 2)]{\includegraphics[width=0.7\textwidth]{message_att2.png}}
+	\caption[Confronto tra sampling casuale e sampling aritmetico steganografico per Attack@Dawn]{Confronto tra campionamento casuale (colonna sinistra) e campionamento aritmetico steganografico (colonna destra) del Transformer di VQ-GAN (modello S-FLCKR) per il messaggio \texttt{Attack@Dawn}, su due gruppi diversi di seed (sei run totali). L'arithmetic coding guida la selezione dei token senza degradare la qualità visiva.}
+	\label{fig:vqgan-sampling-attack}
 \end{figure}
 
 \subsection{Implicazione per la scelta dell'architettura}
