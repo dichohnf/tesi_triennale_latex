@@ -24,36 +24,34 @@ Il sistema implementato segue il seguente flusso operativo:
 	\item \textbf{Estrazione del messaggio}: il destinatario, in possesso dello stesso modello, ripercorre la sequenza di token, ricostruisce le distribuzioni di probabilità e recupera i bit del messaggio originale.
 \end{enumerate}
 
-\subsection{Formalizzazione algoritmica}\label{sec:algoritmi}
+\subsection{Arithmetic coding}\label{sec:algoritmi}
 
-La presente sezione formalizza, tramite pseudocodice e notazione matematica, gli algoritmi discussi nel flusso operativo sopra descritto. Il simbolo $|$ indica la concatenazione di stringhe e $\lfloor\cdot\rceil$ l'arrotondamento all'intero più vicino.
+La presente sezione formalizza, tramite pseudocodice e notazione matematica, l'algoritmo di arithmetic coding discusso nel flusso operativo sopra descritto. Il simbolo $|$ indica la concatenazione di stringhe e $\lfloor\cdot\rceil$ l'arrotondamento all'intero più vicino.
 
-\subsubsection{Selezione steganografica del token}
-
-L'\autoref{alg:selezione-token} implementa il meccanismo di \emph{arithmetic coding} che costituisce il cuore della codifica: dato il contesto corrente, il Transformer produce una distribuzione di probabilità sui $K$ codici del codebook; i token con probabilità inferiore a $1/K$ vengono scartati, le probabilità residue vengono rinormalizzate e quantizzate a $D$ bit di precisione, e il messaggio in ingresso determina quale token selezionare. Il numero di bit consumati è pari alla lunghezza del prefisso binario comune tra gli estremi dell'intervallo cumulativo associato al token scelto.
+L'\autoref{alg:selezione-token} implementa il meccanismo di \emph{arithmetic coding}, cuore della codifica: dato il contesto corrente, il Transformer produce una distribuzione di probabilità sui $K$ codici del codebook; i token con probabilità inferiore a $1/K$ vengono scartati, le probabilità residue vengono rinormalizzate e quantizzate a $D$ bit di precisione, e il messaggio in ingresso determina quale token selezionare. Il numero di bit consumati è pari alla lunghezza del prefisso binario comune tra gli estremi dell'intervallo cumulativo associato al token scelto.
 
 \begin{algorithm}[tbhp]
-\caption{Selezione steganografica del token visivo}
-\label{alg:selezione-token}
-\begin{algorithmic}[1]
-\Require Contesto $\mathbf{c}$, buffer di messaggio $\mathbf{b} \in \{0,1\}^*$, dimensione codebook $K$, precisione $D$, soglia $T$
-\Ensure Indice selezionato $i^*$, prefisso binario $\mathbf{b}_{\text{out}}$
-\State $\mathbf{p} \leftarrow \operatorname{Softmax}\bigl(\operatorname{Transformer}(\mathbf{c})\bigr)$
-\State $\mathcal{I} \leftarrow \{\,i \mid p_i \ge 1/K\,\}$ \Comment{soppressione delle code a bassa probabilità}
-\State $\mathcal{I} \leftarrow \mathcal{I}[0:\min(|\mathcal{I}|,\, T)]$ \Comment{troncamento al top-$T$}
-\ForAll{$i \in \mathcal{I}$}
-\State $\hat{p}_i \leftarrow \bigl\lfloor (p_i \,/ \sum_{j \in \mathcal{I}} p_j) \cdot 2^D \bigr\rceil$ \Comment{quantizzazione a $D$ bit}
-\EndFor
-\State $C_0 \leftarrow 0$
-\For{$k = 1$ \textbf{to} $|\mathcal{I}|$}
-\State $C_k \leftarrow C_{k-1} + \hat{p}_{\mathcal{I}[k-1]}$ \Comment{cumulativa discreta}
-\EndFor
-\State $m \leftarrow \operatorname{BinToInt}\bigl(\mathbf{b}[0:D-1]\bigr)$ \Comment{interpreta i primi $D$ bit come intero}
-\State $i^* \leftarrow \mathcal{I}\bigl[\min\{\,k \mid C_k > m\,\}\bigr]$
-\State $L \leftarrow C_{i^*-1}$,\; $R \leftarrow C_{i^*}$
-\State $\mathbf{b}_{\text{out}} \leftarrow \operatorname{CommonPrefix}\bigl(\operatorname{IntToBin}(L, D),\; \operatorname{IntToBin}(R-1, D)\bigr)$
-\State \Return $(i^*,\; \mathbf{b}_{\text{out}})$
-\end{algorithmic}
+	\caption{Selezione steganografica del token visivo}
+	\label{alg:selezione-token}
+	\begin{algorithmic}[1]
+		\Require Contesto $\mathbf{c}$, buffer di messaggio $\mathbf{b} \in \{0,1\}^*$, dimensione codebook $K$, precisione $D$, soglia $T$
+		\Ensure Indice selezionato $i^*$, prefisso binario $\mathbf{b}_{\text{out}}$
+		\State $\mathbf{p} \leftarrow \operatorname{Softmax}\bigl(\operatorname{Transformer}(\mathbf{c})\bigr)$
+		\State $\mathcal{I} \leftarrow \{\,i \mid p_i \ge 1/K\,\}$ \Comment{soppressione delle code a bassa probabilità}
+		\State $\mathcal{I} \leftarrow \mathcal{I}[0:\min(|\mathcal{I}|,\, T)]$ \Comment{troncamento al top-$T$}
+		\ForAll{$i \in \mathcal{I}$}
+		\State $\hat{p}_i \leftarrow \bigl\lfloor (p_i \,/ \sum_{j \in \mathcal{I}} p_j) \cdot 2^D \bigr\rceil$ \Comment{quantizzazione a $D$ bit}
+		\EndFor
+		\State $C_0 \leftarrow 0$
+		\For{$k = 1$ \textbf{to} $|\mathcal{I}|$}
+		\State $C_k \leftarrow C_{k-1} + \hat{p}_{\mathcal{I}[k-1]}$ \Comment{cumulativa discreta}
+		\EndFor
+		\State $m \leftarrow \operatorname{BinToInt}\bigl(\mathbf{b}[0:D-1]\bigr)$ \Comment{interpreta i primi $D$ bit come intero}
+		\State $i^* \leftarrow \mathcal{I}\bigl[\min\{\,k \mid C_k > m\,\}\bigr]$
+		\State $L \leftarrow C_{i^*-1}$,\; $R \leftarrow C_{i^*}$
+		\State $\mathbf{b}_{\text{out}} \leftarrow \operatorname{CommonPrefix}\bigl(\operatorname{IntToBin}(L, D),\; \operatorname{IntToBin}(R-1, D)\bigr)$
+		\State \Return $(i^*,\; \mathbf{b}_{\text{out}})$
+	\end{algorithmic}
 \end{algorithm}
 
 A valle della selezione del token, il sistema procede posizione per posizione lungo la griglia: per ciascuna posizione viene costruito il contesto locale a partire dalla griglia di riferimento $\mathbf{R}$ e dalla griglia in costruzione $\mathbf{B}$, si invoca la procedura di selezione steganografica, e si assegna il token scelto alla griglia. L'operazione si ripete per tutte le posizioni residue; esaurito il messaggio, le posizioni rimanenti vengono completate con campionamento non vincolato dalla distribuzione del Transformer, così da preservare la coerenza visiva della regione generata.
@@ -159,7 +157,7 @@ Il meccanismo è il seguente:
 \begin{enumerate}
 	\item L'encoder steganografico genera sequenzialmente i token visivi, dove ciascun token $s_t$ è determinato dai bit del messaggio e dalla distribuzione $P(s_t \mid s_{<t})$ prodotta dal Transformer.
 	\item L'immagine generata viene convertita in PNG e trasmessa.
-	\item Il destinatario riceve l'immagine, la riconverte in token, e tenta di estrarre il messaggio. La decodifica richiede di ripercorrere la sequenza: per ciascuna posizione $t$, il destinatario deve ricostruire la distribuzione $P(s_t \mid s_{<t})$ usando i token $s_{<t}$ \textbf{così come appaiono nell'immagine ricevuta}.
+	\item Il destinatario riceve l'immagine, la riconverte in token, e tenta di estrarre il messaggio. La decodifica richiede di ripercorrere la sequenza: per ciascuna posizione $t$, il destinatario deve ricostruire la distribuzione $P(s_t \mid s_{<t})$ usando i token $s_{<t}$ così come appaiono nell'immagine ricevuta.
 \end{enumerate}
 
 Il punto critico è che i token ricevuti $s_{<t}'$ possono differire da quelli originali $s_{<t}$ a causa del rumore del canale PNG. Se un singolo token $s_k$ (per qualche $k < t$) viene alterato, tutte le distribuzioni successive $P(s_t \mid s_{<t}')$ sono calcolate su un contesto corrotto e non corrispondono più a quelle utilizzate dal mittente. Questo genera una cascata: un errore in posizione $k$ corrompe tutte le predizioni da $k+1$ in poi.
@@ -183,7 +181,7 @@ Su questo canale, abbiamo misurato l'errore end-to-end del sistema con Open-MAGV
 
 \begin{itemize}
 	\item \emph{Bit error rate} (\textbf{BER}) $\approx 65\%$ nella configurazione base di arithmetic coding.
-	\item Il BER mostrava una tendenza a \emph{crescere} (verso 80--84\%) quando veniva introdotta una simulazione lato mittente per tentare di allineare il contesto, indicando l'assenza di un punto fisso nel ciclo di feedback.
+	\item Il BER peggiorava ulteriormente (raggiungendo 80--84\%) quando il mittente tentava di anticipare l'effetto del canale simulando il round-trip in pixel a ogni passo di generazione, ovvero decodificando la griglia parziale, ricodificandola con l'encoder LFQ e condizionandosi sui token risultanti $s_{<t}'$, nel tentativo di allineare preventivamente il proprio contesto a quello del destinatario.
 \end{itemize}
 
 La ragione per cui non esiste punto fisso è la circolarità del problema: per allineare il contesto del mittente con quello del destinatario, il mittente dovrebbe condizionarsi sui token ricodificati $s'$; ma i token scelti dal mittente sono quelli che vengono renderizzati, e renderizzarli produce un $s'$ \emph{diverso}. La circolarità è irriducibile.
@@ -206,13 +204,7 @@ Poiché la decodifica di ciascuna posizione non dipende dalle altre, non esiste 
 
 \subsubsection{Risultati dell'embedding nei piani di bit}
 
-L'esperimento ha prodotto risultati positivi:
-
-\begin{itemize}
-	\item Con l'impiego di codici di correzione d'errore (Reed-Solomon su GF(256) e ripetizione binaria), è stato possibile recuperare il messaggio con \textbf{100\% di affidabilità} anche dopo il passaggio attraverso il canale PNG.
-	\item La capacità utile si attestava nell'ordine di \textbf{30--50 byte per immagine 256$\times$256} con strength 9 (9 piani di bit su 18 utilizzati).
-	\item Con l'utilizzo di immagini reali come carrier (invece di campioni generati dal modello autoregressivo (AR)), la capacità scala linearmente con la risoluzione: un'immagine 512$\times$512 ha 4 volte i token di una 256$\times$256, offrendo 4 volte la capacità a parità di strength.
-\end{itemize}
+L'esperimento ha prodotto dei risultati positivi. Con l'impiego di codici di correzione d'errore, Reed-Solomon su GF(256) e ripetizione binaria, è stato possibile recuperare il messaggio con \textbf{100\% di affidabilità} anche dopo il passaggio attraverso il canale PNG. La capacità utile si attestava nell'ordine di \textbf{30--50 byte per immagine 256$\times$256} con strength~9, ovvero 9 piani di bit su 18 utilizzati. Utilizzando immagini reali come carrier, invece di campioni generati dal modello autoregressivo, la capacità scala linearmente con la risoluzione: un'immagine 512$\times$512 ha 4 volte i token di una 256$\times$256, offrendo 4 volte la capacità a parità di strength.
 
 \subsection{Tensione fondamentale: robustezza vs impercettibilità}
 
@@ -237,9 +229,9 @@ La tabella seguente riassume i risultati ottenuti nei vari esperimenti:
 		\textbf{Configurazione}      & \textbf{Canale} & \textbf{BER} & \textbf{Recupero} \\
 		\midrule
 		VQ-GAN + Meteor              & Pixel PNG       & $\sim 19\%$  & Parziale          \\
-		VQ-GAN + fine-tuning encoder & Pixel PNG       & $\sim 10\%$       & Parziale          \\
+		VQ-GAN + Meteor              & Token lossless  & $0\%$        & Completo          \\
+		VQ-GAN + fine-tuning encoder & Pixel PNG       & $\sim 10\%$  & Parziale          \\
 		OpenMAGVIT2 + Meteor         & Pixel PNG       & $\sim 65\%$  & Assente           \\
-		OpenMAGVIT2 + Meteor         & Token lossless  & $0\%$        & Completo          \\
 		OpenMAGVIT2 + QIM            & Pixel PNG       & $< 5\%$      & Completo          \\
 		\bottomrule
 	\end{tabular}
